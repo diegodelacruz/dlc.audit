@@ -17,6 +17,8 @@ class AdaptadoresTest(unittest.TestCase):
         origen = self.raiz / "skills" / "auditor"
         origen.mkdir(parents=True)
         (origen / "SKILL.md").write_text("---\nname: auditor\n---\ncontenido\n", encoding="utf-8")
+        (origen / "references").mkdir()
+        (origen / "references" / "CRITERIOS.md").write_text("criterios\n", encoding="utf-8")
         for plataforma in validar_adaptadores.ADAPTADORES:
             (self.raiz / "plataformas" / plataforma).mkdir(parents=True)
 
@@ -39,6 +41,15 @@ class AdaptadoresTest(unittest.TestCase):
         ruta.write_text("cambio no sincronizado\n", encoding="utf-8")
         problemas = validar_adaptadores.verificar(raiz=self.raiz)
         self.assertTrue(any("antigravity" in p and "no coincide" in p for p in problemas), problemas)
+
+    def test_adaptador_sin_references_se_reporta(self):
+        validar_adaptadores.verificar(raiz=self.raiz, regenerar=True)
+        ruta = self.raiz / "plataformas" / "claude" / "skills" / "auditor" / "references" / "CRITERIOS.md"
+        ruta.unlink()
+        problemas = validar_adaptadores.verificar(raiz=self.raiz)
+        self.assertTrue(
+            any("falta en el adaptador claude" in p and "CRITERIOS.md" in p for p in problemas), problemas
+        )
 
     def test_adaptador_huerfano_se_reporta(self):
         validar_adaptadores.verificar(raiz=self.raiz, regenerar=True)

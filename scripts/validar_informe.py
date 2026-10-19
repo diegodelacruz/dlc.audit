@@ -1,4 +1,4 @@
-"""Valida un informe de auditoría según docs/formato-informe.md (formato 1.0).
+"""Valida un informe de auditoría según skills/auditor/references/FORMATO-INFORME.md (formato 1.0).
 
 Uso:
     python -I scripts/validar_informe.py <ruta-al-informe.md> [...]
@@ -24,6 +24,9 @@ CAMPOS_OBLIGATORIOS = [
 ]
 CAMPOS_AUDITOR = ["repositorio", "commit_auditor", "version_criterios", "agente", "plataforma_ejecucion"]
 CAMPOS_CONTEO = ["critico", "alto", "medio", "bajo", "informativo"]
+CAMPOS_PUEDEN_ESTAR_VACIOS = {"auditoria_previa", "auditor", "conteo_hallazgos"}
+ATRIBUTOS_HALLAZGO = ["Evidencia", "Descripción", "Implicación"]
+JUSTIFICACIONES_VACIAS = {"", "-", "N/A"}
 
 VEREDICTOS = {"PASS", "PASS_WITH_NA", "FAIL"}
 PLATAFORMAS = {"ChatGPT", "Claude", "Antigravity"}
@@ -122,6 +125,17 @@ def _filas_tabla(texto):
     return filas[1:] if filas else []
 
 
+def _filas_validas(texto, columnas, seccion, errores):
+    """Filas de datos con exactamente `columnas` celdas. Las demás generan error; nunca se descartan en silencio."""
+    validas = []
+    for fila in _filas_tabla(texto):
+        if len(fila) == columnas:
+            validas.append(fila)
+        else:
+            errores.append(f"fila malformada en {seccion} (se esperaban {columnas} columnas): {' | '.join(fila)}")
+    return validas
+
+
 def _bloques_hallazgo(texto):
     bloques = []
     partes = re.split(r"^### ", texto, flags=re.MULTILINE)
@@ -145,6 +159,8 @@ def validar_texto(texto, nombre_archivo=None):
     for campo in CAMPOS_OBLIGATORIOS:
         if campo not in datos:
             errores.append(f"falta el campo obligatorio '{campo}'")
+        elif campo not in CAMPOS_PUEDEN_ESTAR_VACIOS and not datos[campo]:
+            errores.append(f"el campo obligatorio '{campo}' está vacío")
 
     if "id" in datos and not RE_ID.match(datos["id"] or ""):
         errores.append(f"id con formato inválido: {datos['id']!r}")
@@ -165,6 +181,8 @@ def validar_texto(texto, nombre_archivo=None):
         for campo in CAMPOS_AUDITOR:
             if campo not in auditor:
                 errores.append(f"falta auditor.{campo}")
+            elif not auditor[campo]:
+                errores.append(f"auditor.{campo} está vacío")
         if "commit_auditor" in auditor and not RE_SHA.match(auditor["commit_auditor"] or ""):
             errores.append("auditor.commit_auditor debe ser un SHA completo de 40 caracteres")
         if auditor.get("plataforma_ejecucion") not in PLATAFORMAS:
@@ -199,8 +217,8 @@ def validar_texto(texto, nombre_archivo=None):
 
     por_nombre = {nombre: texto for _, nombre, texto in secciones}
 
-    controles = [f for f in _filas_tabla(por_nombre["Controles"]) if len(f) >= 4]
-    proveedores = [f for f in _filas_tabla(por_nombre["Cumplimiento por proveedor"]) if len(f) >= 5]
+    controles = _filas_validas(por_nombre["Controles"], 4, "Controles", errores)
+    proveedores = _filas_validas(por_nombre["Cumplimiento por proveedor"], 5, "Cumplimiento por proveedor", errores)
     hallazgos = _bloques_hallazgo(por_nombre["Hallazgos"])
 
     resultados = {f[1] for f in controles}
@@ -222,6 +240,9 @@ def validar_texto(texto, nombre_archivo=None):
         estado = campos.get("Estado", "")
         if estado not in ESTADOS_HALLAZGO:
             errores.append(f"{encabezado}: estado inválido {estado!r}")
+        for atributo in ATRIBUTOS_HALLAZGO:
+            if not campos.get(atributo):
+                errores.append(f"{encabezado}: falta {atributo} o está vacío")
         conteo_real[sev] += 1
         if estado != "CERRADO":
             no_cerrados[sev] += 1
@@ -236,9 +257,13 @@ def validar_texto(texto, nombre_archivo=None):
     for f in controles:
         if f[1] not in RESULTADOS_CONTROL:
             errores.append(f"resultado de control inválido: {f[1]!r}")
+        if f[1] == "N/A" and f[3] in JUSTIFICACIONES_VACIAS:
+            errores.append(f"control N/A sin justificación: {f[0]}")
     for f in proveedores:
         if f[3] not in ESTADOS_PROVEEDOR:
             errores.append(f"estado de proveedor inválido: {f[3]!r}")
+        if f[3] == "NO_APLICA" and f[4] in JUSTIFICACIONES_VACIAS:
+            errores.append(f"requisito NO_APLICA sin evidencia: {f[0]}")
 
     obligan_fail = []
     if no_cerrados["critico"] or no_cerrados["alto"]:

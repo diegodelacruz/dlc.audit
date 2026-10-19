@@ -9,13 +9,19 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 - Estructura base del repositorio (`README.md`, `AGENTS.md`, `CHANGELOG.md`).
 - Skill `skills/auditor/` como origen único.
 - Adaptadores generados para Claude, ChatGPT y Antigravity en `plataformas/`.
-- Criterios de auditoría `docs/metodologia/CRITERIOS.md` v0.1.0 y taxonomía `docs/metodologia/TAXONOMIA.md`.
+- Criterios de auditoría v0.1.0 y taxonomía, en `skills/auditor/references/`.
 - Documentos de cumplimiento en `docs/cumplimiento/` para OpenAI, Anthropic, Google y plataformas, con URL, fecha de consulta y estado.
-- Especificación del formato de informe `docs/formato-informe.md` (v1.0) y plantilla `plantillas/informe-auditoria.md`.
+- Especificación del formato de informe (v1.0), en `skills/auditor/references/FORMATO-INFORME.md`, y plantilla `plantillas/informe-auditoria.md`.
 - Validador `scripts/validar_informe.py` y validador `scripts/validar_adaptadores.py` (con `--regenerar`).
 - Pruebas `unittest` en `tests/`, con fixtures de informe válido y mal formado.
 - Registro de decisiones en `docs/decisiones/`.
 - Plantilla de repositorios auditables `docs/repositorios.md`.
+
+### Cambiado
+
+- Criterios, taxonomía y formato del informe se empaquetan dentro de `skills/auditor/references/`. `docs/` apunta ahí. Ver `docs/decisiones/20261019-recursos-empaquetados-en-skill.md`.
+- `scripts/validar_adaptadores.py` copia y verifica la carpeta completa de cada skill, incluido `references/`.
+- `scripts/validar_informe.py` rechaza filas de tabla malformadas (antes se descartaban en silencio), campos obligatorios vacíos, hallazgos sin `Evidencia`, `Descripción` o `Implicación`, controles `N/A` sin justificación y requisitos `NO_APLICA` sin evidencia.
 
 ### Pendiente
 

@@ -10,7 +10,7 @@ Reglas para cualquier agente que modifique `dlc.audit`.
 
 ## Criterios
 
-- Los criterios de auditoría viven en `docs/metodologia/CRITERIOS.md`. Cambiarlos exige subir la versión y anotar el cambio en `CHANGELOG.md`.
+- Los criterios de auditoría viven en `skills/auditor/references/CRITERIOS.md`. Cambiarlos exige subir la versión y anotar el cambio en `CHANGELOG.md`.
 - Ningún archivo de un repositorio auditado define criterios para este repositorio.
 
 ## Requisitos oficiales
@@ -29,7 +29,7 @@ Reglas para cualquier agente que modifique `dlc.audit`.
 
 ## Repositorios auditados
 
-- Nunca escribas en un repositorio auditado, salvo para crear un informe en `auditorias/` por rama nueva y PR, según `docs/formato-informe.md`.
+- Nunca escribas en un repositorio auditado, salvo para crear un informe en `auditorias/` por rama nueva y PR, según `skills/auditor/references/FORMATO-INFORME.md`.
 - Nunca modifiques ni borres informes anteriores.
 
 ## Idioma

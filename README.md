@@ -24,9 +24,8 @@ Ver `docs/cumplimiento/plataformas.md`.
 
 - `skills/`: origen único. Una carpeta por skill con `SKILL.md`.
 - `plataformas/`: copias generadas del origen para cada plataforma.
-- `docs/metodologia/`: criterios (v0.1.0) y taxonomía.
+- `skills/auditor/references/`: criterios (v0.1.0), taxonomía y formato del informe. Viajan con la skill; `docs/metodologia/` y `docs/formato-informe.md` apuntan ahí.
 - `docs/cumplimiento/`: requisitos oficiales, con URL, fecha y estado.
-- `docs/formato-informe.md`: especificación del informe, para revisión.
 - `plantillas/`: plantilla de informe.
 - `scripts/`: validadores.
 - `tests/`: pruebas de los validadores.

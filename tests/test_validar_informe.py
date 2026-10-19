@@ -67,6 +67,57 @@ class InformeMalFormadoTest(unittest.TestCase):
         self.assertTrue(any("no coincide con el nombre del archivo" in e for e in errores), errores)
 
 
+class DefectosPuntualesTest(unittest.TestCase):
+    """Cada prueba parte del informe válido y añade un único defecto."""
+
+    def _errores(self, reemplazos):
+        texto = _texto("informe_valido.md")
+        for antes, despues in reemplazos:
+            self.assertIn(antes, texto, f"el fixture no contiene {antes!r}")
+            texto = texto.replace(antes, despues)
+        return validar_informe.validar_texto(texto, NOMBRE_VALIDO)
+
+    def _contiene(self, errores, fragmento):
+        return any(fragmento in e for e in errores)
+
+    def test_fila_de_control_con_pocas_celdas_se_reporta(self):
+        errores = self._errores([("| C11 Coherencia del formato | PASS | validar_informe.py | Sin errores |",
+                                  "| C11 Coherencia del formato | PASS | validar_informe.py |")])
+        self.assertTrue(self._contiene(errores, "fila malformada en Controles"), errores)
+
+    def test_control_fail_con_pocas_celdas_no_desaparece(self):
+        errores = self._errores([("| C11 Coherencia del formato | PASS | validar_informe.py | Sin errores |",
+                                  "| C11 Coherencia del formato | FAIL | evidencia |")])
+        self.assertTrue(self._contiene(errores, "fila malformada en Controles"), errores)
+
+    def test_campo_obligatorio_vacio_se_reporta(self):
+        errores = self._errores([("rama: claude/beautiful-goldberg-gak8us", "rama: ")])
+        self.assertTrue(self._contiene(errores, "el campo obligatorio 'rama' está vacío"), errores)
+
+    def test_campo_auditor_vacio_se_reporta(self):
+        errores = self._errores([("  agente: fixture-de-prueba 0.0.1", "  agente:")])
+        self.assertTrue(self._contiene(errores, "auditor.agente está vacío"), errores)
+
+    def test_hallazgo_sin_implicacion_se_reporta(self):
+        errores = self._errores([("- **Implicación:** La skill no se carga en la plataforma afectada.",
+                                  "- **Implicación:** ")])
+        self.assertTrue(self._contiene(errores, "falta Implicación o está vacío"), errores)
+
+    def test_hallazgo_sin_evidencia_se_reporta(self):
+        errores = self._errores([("- **Evidencia:** SKILL.md:2\n", "")])
+        self.assertTrue(self._contiene(errores, "falta Evidencia o está vacío"), errores)
+
+    def test_control_na_sin_justificacion_se_reporta(self):
+        errores = self._errores([("| C11 Coherencia del formato | PASS | validar_informe.py | Sin errores |",
+                                  "| C11 Coherencia del formato | N/A | validar_informe.py | N/A |")])
+        self.assertTrue(self._contiene(errores, "control N/A sin justificación"), errores)
+
+    def test_requisito_no_aplica_sin_evidencia_se_reporta(self):
+        errores = self._errores([("| Anthropic | name: máximo 64 caracteres | https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview (2026-10-19) | NO_CUMPLE | SKILL.md:2 |",
+                                  "| Anthropic | name: máximo 64 caracteres | https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview (2026-10-19) | NO_APLICA |  |")])
+        self.assertTrue(self._contiene(errores, "requisito NO_APLICA sin evidencia"), errores)
+
+
 class EstructuraTest(unittest.TestCase):
     def test_sin_bloque_yaml_falla(self):
         errores = validar_informe.validar_texto("# Sin encabezado\n", NOMBRE_VALIDO)
