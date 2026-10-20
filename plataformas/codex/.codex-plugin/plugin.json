@@ -1,0 +1,14 @@
+{
+  "name": "auditor",
+  "version": "0.1.0",
+  "description": "Audita de forma independiente repositorios de skills y agentes y genera un informe .md estandarizado con evidencia reproducible.",
+  "repository": "https://github.com/diegodelacruz/dlc.audit",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Auditor de skills",
+    "shortDescription": "Auditoría independiente de skills y agentes",
+    "capabilities": [
+      "Read"
+    ]
+  }
+}
