@@ -11,6 +11,7 @@ Solo usa la biblioteca estándar. Devuelve 0 si todo está sincronizado y 1 si n
 """
 
 import hashlib
+import json
 import shutil
 import sys
 from pathlib import Path
@@ -22,7 +23,11 @@ ADAPTADORES = {
     "claude": "skills",
     "chatgpt": "skills",
     "antigravity": ".agents/skills",
+    "codex": "skills",
 }
+
+# El manifiesto del plugin de Codex se escribe a mano (no se genera). Debe apuntar a la carpeta de skills.
+MANIFIESTO_CODEX = Path("codex") / ".codex-plugin" / "plugin.json"
 
 
 def _sha256(ruta):
@@ -37,6 +42,23 @@ def skills_origen(origen):
 def _archivos(carpeta):
     """Rutas relativas de todos los archivos de una carpeta de skill."""
     return {p.relative_to(carpeta) for p in carpeta.rglob("*") if p.is_file()}
+
+
+def _verificar_manifiesto_codex(plataformas):
+    """Comprueba que el manifiesto de Codex exista, sea JSON válido y apunte a ./skills/."""
+    ruta = plataformas / MANIFIESTO_CODEX
+    if not ruta.exists():
+        return [f"falta el manifiesto del plugin de Codex: {ruta}"]
+    try:
+        datos = json.loads(ruta.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        return [f"el manifiesto de Codex no es JSON válido: {e}"]
+    problemas = []
+    if not datos.get("name"):
+        problemas.append("el manifiesto de Codex no declara name")
+    if datos.get("skills") != "./skills/":
+        problemas.append("el manifiesto de Codex debe declarar \"skills\": \"./skills/\"")
+    return problemas
 
 
 def verificar(raiz=RAIZ, regenerar=False):
@@ -71,6 +93,7 @@ def verificar(raiz=RAIZ, regenerar=False):
                     problemas.append(f"el archivo {rel} del adaptador {plataforma} de '{nombre}' no coincide con el origen")
 
     if not regenerar:
+        problemas.extend(_verificar_manifiesto_codex(plataformas))
         for plataforma, base in ADAPTADORES.items():
             carpeta_base = plataformas / plataforma / base
             if not carpeta_base.exists():

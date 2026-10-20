@@ -17,6 +17,10 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 - Registro de decisiones en `docs/decisiones/`.
 - Plantilla de repositorios auditables `docs/repositorios.md`.
 
+### Añadido (Codex)
+
+- Adaptador de Codex como plugin en `plataformas/codex/`, con manifiesto `.codex-plugin/plugin.json` y verificación en `validar_adaptadores.py`. Ver `docs/decisiones/20261020-adaptador-codex-plugin.md`.
+
 ### Cambiado
 
 - Criterios, taxonomía y formato del informe se empaquetan dentro de `skills/auditor/references/`. `docs/` apunta ahí. Ver `docs/decisiones/20261019-recursos-empaquetados-en-skill.md`.

@@ -15,6 +15,7 @@ Agente auditor independiente para repositorios de skills y agentes. Verifica su 
 | Plataforma | Adaptador | Verificación |
 |---|---|---|
 | Claude | `plataformas/claude/skills/auditor/` | Verificado (documentación de Anthropic, 2026-10-19) |
+| Codex | `plataformas/codex/` (plugin con `.codex-plugin/plugin.json`) | Verificado en el ejemplo `openai/plugins`; guía de build no accesible |
 | ChatGPT | `plataformas/chatgpt/skills/auditor/` | [No verificado]: documentación oficial no accesible |
 | Antigravity | `plataformas/antigravity/.agents/skills/auditor/` | [No verificado]: solo fuentes secundarias |
 

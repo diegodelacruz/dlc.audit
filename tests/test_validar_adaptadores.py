@@ -1,3 +1,4 @@
+import json
 import shutil
 import sys
 import tempfile
@@ -21,6 +22,9 @@ class AdaptadoresTest(unittest.TestCase):
         (origen / "references" / "CRITERIOS.md").write_text("criterios\n", encoding="utf-8")
         for plataforma in validar_adaptadores.ADAPTADORES:
             (self.raiz / "plataformas" / plataforma).mkdir(parents=True)
+        manifiesto = self.raiz / "plataformas" / validar_adaptadores.MANIFIESTO_CODEX
+        manifiesto.parent.mkdir(parents=True)
+        manifiesto.write_text(json.dumps({"name": "auditor", "skills": "./skills/"}), encoding="utf-8")
 
     def tearDown(self):
         self.tmp.cleanup()
@@ -58,6 +62,37 @@ class AdaptadoresTest(unittest.TestCase):
         (huerfano / "SKILL.md").write_text("x", encoding="utf-8")
         problemas = validar_adaptadores.verificar(raiz=self.raiz)
         self.assertTrue(any("sin origen" in p and "otra-skill" in p for p in problemas), problemas)
+
+
+class ManifiestoCodexTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.plataformas = Path(self.tmp.name) / "plataformas"
+        self.ruta = self.plataformas / "codex" / ".codex-plugin" / "plugin.json"
+        self.ruta.parent.mkdir(parents=True)
+        self.ruta.write_text(json.dumps({"name": "auditor", "skills": "./skills/"}), encoding="utf-8")
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_manifiesto_valido_no_tiene_problemas(self):
+        self.ruta.write_text(json.dumps({"name": "auditor", "skills": "./skills/"}), encoding="utf-8")
+        self.assertEqual(validar_adaptadores._verificar_manifiesto_codex(self.plataformas), [])
+
+    def test_manifiesto_faltante_se_reporta(self):
+        self.ruta.unlink()
+        problemas = validar_adaptadores._verificar_manifiesto_codex(self.plataformas)
+        self.assertTrue(any("falta el manifiesto" in p for p in problemas), problemas)
+
+    def test_manifiesto_con_json_invalido_se_reporta(self):
+        self.ruta.write_text("{no es json", encoding="utf-8")
+        problemas = validar_adaptadores._verificar_manifiesto_codex(self.plataformas)
+        self.assertTrue(any("no es JSON válido" in p for p in problemas), problemas)
+
+    def test_skills_con_ruta_incorrecta_se_reporta(self):
+        self.ruta.write_text(json.dumps({"name": "auditor", "skills": "./otra/"}), encoding="utf-8")
+        problemas = validar_adaptadores._verificar_manifiesto_codex(self.plataformas)
+        self.assertTrue(any("./skills/" in p for p in problemas), problemas)
 
 
 if __name__ == "__main__":

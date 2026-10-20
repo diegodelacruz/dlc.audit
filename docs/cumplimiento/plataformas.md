@@ -7,7 +7,8 @@ Fecha de consulta: **2026-10-19**. Detalle de fuentes y estados en `openai.md`, 
 | Plataforma | Mecanismo equivalente a skills | Verificación | Adaptador en este repositorio |
 |---|---|---|---|
 | Claude (Claude Code) | Carpeta con `SKILL.md` en `~/.claude/skills/` o `.claude/skills/` | Verificado (Anthropic) | `plataformas/claude/skills/auditor/SKILL.md` |
-| ChatGPT | Skills en ChatGPT: no se obtuvo documentación oficial accesible. El equivalente más cercano verificado es el estándar Agent Skills (carpeta con `SKILL.md`) y la estructura de plugin de Codex | [No verificado] para ChatGPT | `plataformas/chatgpt/skills/auditor/SKILL.md` |
+| ChatGPT | Skills en ChatGPT: no se obtuvo documentación oficial accesible. El equivalente más cercano verificado es el estándar Agent Skills (carpeta con `SKILL.md`) | [No verificado] para ChatGPT | `plataformas/chatgpt/skills/auditor/SKILL.md` |
+| Codex | Plugin con `.codex-plugin/plugin.json` y carpeta `skills/` al lado (ejemplo verificado en `openai/plugins`) | Verificado en el ejemplo; la guía de build no fue accesible | `plataformas/codex/` (manifiesto y `skills/auditor/`) |
 | Antigravity | Skills en `.agents/skills/<nombre>/SKILL.md` según fuentes secundarias | [No verificado] | `plataformas/antigravity/.agents/skills/auditor/SKILL.md` |
 
 ## Claude
@@ -18,7 +19,13 @@ Fecha de consulta: **2026-10-19**. Detalle de fuentes y estados en `openai.md`, 
 ## ChatGPT
 
 - No se pudo verificar cómo ChatGPT carga skills personalizadas. Por eso el adaptador deja el contenido en `plataformas/chatgpt/skills/auditor/SKILL.md`, con la misma estructura que el estándar abierto, y no incluye manifiesto de plugin.
-- Alternativa documentada: el plugin de Codex, con `.codex-plugin/plugin.json` y la carpeta `skills/` (O-02 en `openai.md`). Se descarta por ahora porque es un formato de Codex, no de ChatGPT.
+- Ver `docs/decisiones/20261019-adaptador-chatgpt-sin-manifiesto.md`.
+
+## Codex
+
+- Plugin en `plataformas/codex/`: manifiesto `.codex-plugin/plugin.json` escrito a mano, con `"skills": "./skills/"`, y la copia generada `skills/auditor/`.
+- El manifiesto se valida en `scripts/validar_adaptadores.py` (existe, es JSON válido y apunta a `./skills/`).
+- Campos verificados solo en el ejemplo `plugins/figma` de `openai/plugins`. Ver `docs/decisiones/20261020-adaptador-codex-plugin.md`.
 - Ver `docs/decisiones/20261019-adaptador-chatgpt-sin-manifiesto.md`.
 
 ## Antigravity

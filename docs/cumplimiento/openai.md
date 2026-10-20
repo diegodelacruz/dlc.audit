@@ -17,7 +17,7 @@ Fecha de consulta: **2026-10-19**.
 | ID | Requisito | Fuente | Estado |
 |---|---|---|---|
 | O-01 | Una skill es una carpeta con `SKILL.md`; `name` y `description` son obligatorios | Especificación Agent Skills (https://raw.githubusercontent.com/agentskills/agentskills/main/docs/specification.mdx) | Verificado en la especificación abierta. [No verificado] que Codex o ChatGPT la sigan exactamente, porque la documentación de Codex no fue accesible |
-| O-02 | Estructura de plugin de Codex: `plugins/<nombre>/.codex-plugin/plugin.json` obligatorio; `skills/` opcional dentro del plugin | `openai/plugins` README | Verificado |
+| O-02 | Estructura de plugin de Codex: `plugins/<nombre>/.codex-plugin/plugin.json` obligatorio; `skills/` opcional dentro del plugin | `openai/plugins` README y `plugins/figma/.codex-plugin/plugin.json` (leído 2026-10-20) | Verificado en el ejemplo. Adaptado en `plataformas/codex/`. [No verificado] que el conjunto mínimo de campos sea completo, porque la guía oficial de build no fue accesible |
 | O-03 | Metadatos de interfaz y política de invocación en `agents/openai.yaml` | Búsqueda web sobre la documentación de Codex (no verificada directamente) | [No verificado] |
 | O-04 | `AGENTS.md` como instrucciones de repositorio | No se obtuvo fuente oficial accesible | [No verificado] |
 | O-05 | Requisitos específicos de skills dentro de ChatGPT | No se obtuvo fuente oficial accesible | [No verificado] |
