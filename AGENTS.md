@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Reglas para agentes que modifiquen u operen este repositorio. Versión 1.4.
+Reglas para agentes que modifiquen u operen este repositorio. Versión 1.5.
 
 ## 1. Propósito
 
@@ -34,6 +34,8 @@ Reglas para agentes que modifiquen u operen este repositorio. Versión 1.4.
 - SQL/PL-SQL en ejemplos y prompts: tabuladores, minúsculas, comas al inicio de línea, `where 1 = 1`.
 - JSON/YAML: espacios (el formato no admite tabuladores).
 - Documentación en Markdown, español neutro, tuteo profesional.
+- **Requisitos oficiales:** no se afirman de memoria. Se consulta la documentación oficial, se registran URL, fecha y cita literal en `docs/cumplimiento/` y lo no comprobado se marca **[No verificado]**.
+- **Decisiones:** cada decisión de diseño va en `docs/decisiones/AAAAMMDD-slug.md`, con `Estado:` y motivo. Una decisión reemplazada no se borra: se anota por quién.
 - Cada cambio relevante se registra en `CHANGELOG.md` (Keep a Changelog).
 - Antes de commitear: `python -m unittest discover -s tests` debe pasar.
 

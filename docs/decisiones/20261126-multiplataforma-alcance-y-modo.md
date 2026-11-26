@@ -15,7 +15,7 @@ La rama `claude/gallant-babbage-2srymf` (PR #1, octubre) decidió que Claude, Co
 
 ## Motivo
 
-Dos carpetas (`.claude/skills/` y `.agents/skills/`) cubren Claude Code, Codex y Antigravity con el estándar abierto Agent Skills. Empaquetar el núcleo en cada plataforma duplicaría unas 2.000 líneas sin necesidad mientras se trabaje desde un clon. El validador de informes de octubre no tiene objeto cuando no se almacenan informes.
+Dos carpetas (`.claude/skills/` y `.agents/skills/`) cubren Claude Code, Codex y Antigravity; las tres declaran seguir el estándar abierto Agent Skills (`docs/cumplimiento/`). Empaquetar el núcleo en cada plataforma duplicaría unas 2.000 líneas sin necesidad mientras se trabaje desde un clon. El validador de informes de octubre no tiene objeto cuando no se almacenan informes.
 
 ## Consecuencias
 

@@ -6,7 +6,7 @@
 
 Lo implementado hoy cubre solo Claude Code (skills `audit-repo` y `reaudit`, subagente `dlc-auditor`) sobre un núcleo Python independiente de la plataforma.
 
-Pendiente para cerrar v1: bloques 2 a 5 de `multiplataforma.md` y la reconciliación con la rama `claude/gallant-babbage-2srymf` (PR #1), que se conserva hasta completar el portado.
+Pendiente para cerrar v1: bloques 4 y 5 de `multiplataforma.md` (catálogo de reglas y cierre de ramas). El contenido útil de la rama `claude/gallant-babbage-2srymf` (PR #1) ya está portado (bloque 3); la rama se conserva hasta el bloque 5.
 
 ## Qué hace dlc.audit
 
@@ -70,7 +70,7 @@ Actúa como **auditor externo** en un flujo integrador-auditor (ver `protocolo.m
 | Formato del informe | El actual (JSON y documentos generados); se descarta el formato YAML de la rama de octubre |
 | Modo de uso de las skills | Dentro de un clon de `dlc.audit` |
 | Rama `claude/gallant-babbage-2srymf` (PR #1) | Portado selectivo y luego cierre del PR y borrado de la rama, con etiqueta de archivo |
-| Rama `claude/nice-carson-yc8xgi` | Descartada por el usuario (informes de auditoría de `apex.skills`; último commit `acee291`) |
+| Rama `claude/nice-carson-yc8xgi` | Descartada por el usuario (contenía informes de auditoría de otro repositorio; último commit `acee291`) |
 | Método de merge a `main` | Merge commit (`--no-ff`) |
 | Secuencia | Fusionar el núcleo ahora con v1 marcado incompleto; la multiplataforma se construye después |
 

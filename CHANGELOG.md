@@ -4,6 +4,20 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-26
+
+### Añadido
+
+- `docs/cumplimiento/`: requisitos oficiales de Agent Skills, Anthropic, OpenAI (Codex y ChatGPT) y Google (Antigravity), releídos el 2026-11-26 con **citas literales**, URL, estado y la forma en que se leyó cada página.
+- `docs/decisiones/`: registro de decisiones con índice. Se portan 9 de las 10 decisiones de la rama de octubre, con su estado actual y el motivo, y se añaden las decisiones de hoy (sin informes en este repositorio; protocolo auditor-integrador).
+- `docs/criterios.md`: trazabilidad de los criterios C1 a C12 y la taxonomía de octubre hacia el diseño actual, con sus brechas.
+- `AGENTS.md` v1.5: reglas para requisitos oficiales y decisiones.
+
+### Corregido
+
+- `docs/multiplataforma.md`: el plugin de Codex ya no se declara "innecesario" (la documentación recomienda carpetas directas y presenta el plugin como distribución), y se añade la razón fuerte para limitar el frontmatter a `name` y `description`: la subida a claude.ai y a la API falla con campos fuera de su lista.
+
+
 ## [0.5.0] - 2026-11-26
 
 ### Añadido

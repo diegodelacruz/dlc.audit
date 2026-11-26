@@ -1,6 +1,6 @@
 # Multiplataforma (bloque 1: definición)
 
-Estado: **aceptada el 2026-11-26** por el usuario. Bloque 2 implementado; bloques 3 a 5 pendientes (ver al final).
+Estado: **aceptada el 2026-11-26** por el usuario. Bloques 2 y 3 implementados; bloques 4 y 5 pendientes (ver al final).
 
 ## Decisiones
 
@@ -20,16 +20,20 @@ Consecuencia de M2 y M4: **solo Claude Code puede quedar verificado de punta a p
 | L1 Instalable | La plataforma descubre y carga las skills | Estructura conforme a la documentación oficial y validador de sincronía de copias |
 | L2 Ejecutable | El ciclo completo (auditar, publicar, re-auditar, cerrar) funciona en esa plataforma | Prueba real de punta a punta sobre un repositorio |
 
-## Plataformas (consulta del 2026-11-26)
+## Plataformas (consulta literal del 2026-11-26)
 
-| Plataforma | Dónde carga las skills | Fuente | Estado de verificación |
-|---|---|---|---|
-| Claude Code | `.claude/skills/<nombre>/SKILL.md` | Documentación de Anthropic | Verificado el 2026-10-19 en la rama de octubre; **se vuelve a leer al portar `docs/cumplimiento/`** |
-| Codex | `.agents/skills/` desde el directorio actual hasta la raíz del repositorio; usuario `$HOME/.agents/skills`; administrador `/etc/codex/skills`. El plugin (`.codex-plugin/plugin.json`) **no es necesario** para usar una skill dentro de un repositorio | https://learn.chatgpt.com/docs/build-skills (destino de la redirección permanente desde https://developers.openai.com/codex/skills) | **Parcial.** Lectura asistida por un resumen generado por modelo, no texto literal. `name` y `description` obligatorios. Sin límites de longitud, sandbox, red ni git en lo leído |
-| Antigravity | `<raíz>/.agents/skills/<skill>/SKILL.md` en App, CLI e IDE, y carpetas padre hasta la raíz del repositorio; global `~/.gemini/config/skills/`. `.agent/skills` sigue siendo compatible | https://antigravity.google/docs/skills.md | **Verificado en la página oficial** (sin fecha ni versión). `description` obligatoria; `name` opcional (por defecto, el nombre de la carpeta). Las skills pueden incluir scripts ejecutables. Declara seguir el estándar abierto Agent Skills. Sin límites de longitud, terminal, red ni git |
-| ChatGPT | Subida desde *Skills, Create, Upload from your computer*, con escaneo previo (estados *Needs Review* y *Blocked*) | https://help.openai.com/en/articles/20001066-skills-in-chatgpt | Instalación **verificada**. Disponible para planes Business, Enterprise, Healthcare y Edu según la configuración del workspace. Formato de subida, entorno de ejecución, red, GitHub y `git push` **no documentados** en la página |
+Las citas textuales, las URL y el estado de cada requisito están en [`cumplimiento/`](cumplimiento/plataformas.md).
 
-Límites de esta verificación: la fecha de consulta es la del encabezado; Antigravity y ChatGPT no publican fecha; el contenido de Codex proviene en parte de un resumen y debe releerse literalmente al portar `docs/cumplimiento/`.
+| Plataforma | Dónde carga las skills | Estado de verificación |
+|---|---|---|
+| Claude Code | `.claude/skills/<nombre>/SKILL.md` (A-05) | **Verificado** en texto completo. Todos los campos del frontmatter son opcionales y los desconocidos se ignoran, pero la subida a claude.ai o a la API falla con error ante cualquier campo fuera de su lista (A-06, A-07) |
+| Codex | `.agents/skills/` desde el directorio actual hasta la raíz del repositorio (O-02). `name` y `description` obligatorios (O-01) | **Verificado** en texto completo. Recomienda las carpetas directas de skill para flujos acotados al repositorio y presenta el plugin como mecanismo de distribución (O-06). Sin límites de longitud (O-04); sandbox, permisos, red y git no documentados |
+| Antigravity | `<raíz>/.agents/skills/<skill>/SKILL.md` en App, CLI e IDE, y carpetas padre hasta la raíz (G-02). `description` obligatoria; `name` opcional (G-01) | **Verificado** en texto completo. Las skills pueden incluir scripts ejecutables (G-04); terminal, red y git no documentados |
+| ChatGPT | Subida desde *Skills, Create, Upload from your computer* (O-08), con escaneo previo (O-09). Planes Business, Enterprise, Healthcare y Edu (O-07) | Subida **verificada**. Formato de archivo, ejecución, red, GitHub y `git push` **no documentados** (O-08, O-11) |
+
+Límites de esta verificación: Antigravity y ChatGPT no publican versión; ninguna página de Codex ni de ChatGPT muestra fecha (la de ChatGPT dice "Updated: last month"); el último tercio de la página de Claude Code llegó como resumen y no se usó. Detalle en cada archivo de `cumplimiento/`.
+
+**Correcciones a la primera versión de este documento** (el mismo día, tras la relectura literal): el plugin de Codex no se declara "innecesario"; la documentación recomienda las carpetas directas para este caso y presenta el plugin como mecanismo de distribución. Y la razón para dejar solo `name` y `description` no es solo la falta de documentación de Codex y Antigravity: la subida a claude.ai y a la API **rechaza** los campos fuera de su lista (A-07).
 
 ## Requisitos del host
 
@@ -58,11 +62,11 @@ skills/                       # fuente única, editable, portable
 
 - **Una fuente, copias generadas.** Nadie edita las copias; un validador compara hashes y falla si difieren (decisión heredada de la rama de octubre: Windows 11 no maneja bien los enlaces simbólicos).
 - **ChatGPT:** `python -m dlc_audit skills package` genera un `.zip` con una carpeta por skill, escrito en el directorio temporal y nunca en este repositorio. El formato de subida de ChatGPT no está documentado: es el empaquetado habitual del estándar y consta como **[No verificado]**.
-- **El plugin de Codex y el manifiesto de ChatGPT de la rama de octubre no se portan.** Quedan reemplazados por esta decisión; sirven para distribuir fuera del repositorio, lo que M1 deja fuera de v1.
+- **El plugin de Codex y el manifiesto de ChatGPT de la rama de octubre no se portan.** Quedan reemplazados por esta decisión; el plugin es un mecanismo de distribución (O-06), lo que M1 deja fuera de v1.
 
 ### Reglas de portabilidad de `skills/`
 
-1. Frontmatter solo con `name` y `description`. Nada de `argument-hint` ni campos propietarios: el comportamiento de campos desconocidos no está documentado en Codex ni en Antigravity.
+1. Frontmatter solo con `name` y `description`. Nada de `argument-hint` ni campos propietarios: la subida a claude.ai y a la API falla con error ante campos fuera de su lista (A-07) y Codex y Antigravity no documentan qué hacen con campos desconocidos. La especificación abierta admite cuatro campos opcionales más (S-04); no se usan.
 2. `name` en minúsculas, números y guiones, de hasta 64 caracteres, igual al nombre de su carpeta y sin las palabras "claude" ni "anthropic" (restricción de Anthropic).
 3. `description` no vacía, de hasta 1.024 caracteres y sin etiquetas XML (Anthropic). Debe decir qué hace y cuándo usarla.
 4. Sin variables ni herramientas propietarias (`$ARGUMENTS`, `AskUserQuestion`, `.claude/`). Se redacta en términos generales con alternativa: "si la plataforma ofrece una herramienta para preguntar con opciones, úsala; si no, pregunta en texto y espera".
@@ -75,7 +79,7 @@ skills/                       # fuente única, editable, portable
 |---|---|---|
 | 1 | Esta definición | Aceptada |
 | 2 | Fuente única `skills/`, generador y validador de sincronía (`skills check` y `skills sync`), portabilidad de las dos skills, comando `skills package` | **Hecho** |
-| 3 | Portado desde `claude/gallant-babbage-2srymf`: `docs/cumplimiento/` releído y actualizado, `docs/decisiones/` saneadas con repositorios ficticios, criterios C1 a C12 como referencia | Pendiente |
+| 3 | Portado desde `claude/gallant-babbage-2srymf`: `docs/cumplimiento/` releído de forma literal, `docs/decisiones/` saneadas, criterios C1 a C12 como trazabilidad en `criterios.md` | **Hecho** |
 | 4 | Catálogo de reglas: marcar `source_verified` con fuente en las reglas ya verificadas; nuevas comprobaciones de `name` ("claude" y "anthropic") y etiquetas XML | Pendiente |
 | 5 | Cierre del PR #1 y borrado de la rama de octubre con etiqueta de archivo; prueba de punta a punta en Claude Code por el usuario | Pendiente |
 
