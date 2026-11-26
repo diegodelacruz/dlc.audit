@@ -40,12 +40,29 @@ def safe_source(source: str) -> bool:
     return bool(re.match(r"^(https?://|ssh://|git@[\w.-]+:|file://)", source)) or Path(source).is_dir()
 
 
+SAFE_REF = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/@+-]*$")
+RUN_ID_RE = re.compile(r"^\d{8}T\d{4,6}Z-[\w.-]+$")
+
+
+def _same_repo(a: str, b: str) -> bool:
+    """Compara dos orígenes (URL o ruta) ignorando credenciales, barra final y sufijo .git."""
+    def norm(x: str) -> str:
+        x = sanitize_url(x).rstrip("/")
+        p = Path(x)
+        if p.is_dir():
+            x = str(p.resolve())
+        return re.sub(r"\.git$", "", x)
+    return norm(a) == norm(b)
+
+
 def repo_name(source: str) -> str:
     tail = re.split(r"[/:]", source.rstrip("/"))[-1]
     return re.sub(r"\.git$", "", tail) or "repo"
 
 
 def resolve_ref(repo: Path, ref: str) -> str:
+    if not SAFE_REF.match(ref) or ".." in ref:
+        raise GitError(f"Referencia no válida: {ref!r}.")
     for candidate in (f"origin/{ref}", ref):
         out = _run(["rev-parse", "--verify", "-q", f"{candidate}^{{commit}}"], cwd=repo, check=False)
         if out.returncode == 0:
@@ -60,6 +77,9 @@ def fetch(source: str, dest_root: Path, ref: str | None = None) -> dict:
     dest = dest_root / repo_name(source)
     dest_root.mkdir(parents=True, exist_ok=True)
     if (dest / ".git").is_dir():
+        origin = _run(["remote", "get-url", "origin"], cwd=dest, check=False).stdout.strip()
+        if not _same_repo(origin, source):
+            raise GitError(f"{dest} ya contiene otro repositorio ({sanitize_url(origin)}); use otra carpeta con --dest.")
         _run([*NO_HOOKS, "fetch", "--all", "--prune", "--tags", "-q"], cwd=dest)
     else:
         _run([*NO_HOOKS, "clone", "-q", "--", source, str(dest)])
@@ -102,7 +122,10 @@ def publish(run_path: Path, push: bool = False, remote_url: str | None = None) -
     if _run(["ls-remote", "--heads", url, branch], check=False).stdout.strip():
         raise GitError(f"La rama {branch} ya existe en el remoto; cada run publica una rama nueva.")
 
-    files = [p for p in run_dir.rglob("*") if p.is_file()]
+    # Solo los entregables conocidos: nunca archivos sueltos que haya en la carpeta del run.
+    files = [p for p in run_dir.rglob("*") if p.is_file() and (
+        p.relative_to(run_dir).as_posix() in ("hallazgos.json", "informe.md", "prompt-integrador.md")
+        or (p.parent == run_dir / "prompts" and p.suffix == ".md"))]
     work = Path(tempfile.mkdtemp(prefix="dlc-audit-publish-"))
     try:
         clone = work / "clone"
@@ -162,6 +185,9 @@ def cycle_branches(repo: Path, final_run: dict) -> tuple[list[dict], list[str]]:
         ids.append(final_run["run_id"])
     rid, seen = final_run.get("baseline_run_id"), set(ids)
     while rid and rid not in seen:
+        if not isinstance(rid, str) or not RUN_ID_RE.match(rid):
+            notes.append(f"baseline_run_id inválido en la cadena ({str(rid)[:40]!r}); se detiene aquí.")
+            break
         seen.add(rid)
         ids.append(rid)
         branch = f"audit/{rid}"

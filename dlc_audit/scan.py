@@ -171,29 +171,46 @@ SECRET_PATTERNS = [
 PLACEHOLDER = re.compile(r"(?i)^(x+|\*+|changeme|change_me|your[_-].*|example.*|<.*>|\$\{.*\}|\{\{.*\}\}|none|null|dummy.*|test.*)$")
 
 
+def _redact_line(line: str, spans: list[tuple[int, int]]) -> str:
+    """Sustituye por [REDACTED] cada tramo secreto (se fusionan los solapados)."""
+    merged: list[list[int]] = []
+    for start, end in sorted(spans):
+        if merged and start <= merged[-1][1]:
+            merged[-1][1] = max(merged[-1][1], end)
+        else:
+            merged.append([start, end])
+    for start, end in reversed(merged):
+        line = line[:start] + "[REDACTED]" + line[end:]
+    return line
+
+
 def d_secrets(ctx: Ctx, rule: dict) -> list[dict]:
     out = []
     for rel in ctx.files:
         text = ctx.read(rel)
         if not text:
             continue
-        hits = []
+        lines = text.splitlines()
+        by_line: dict[int, list[tuple[int, int]]] = {}
+        labels: set[str] = set()
+        total = 0
         for label, pat in SECRET_PATTERNS:
             for m in pat.finditer(text):
                 if m.groups() and PLACEHOLDER.match(m.group(1)):
                     continue
-                hits.append((m, label))
-        if not hits:
+                g = 1 if m.groups() else 0
+                ln = line_of(text, m.start(g))
+                line_start = text.rfind("\n", 0, m.start(g)) + 1
+                by_line.setdefault(ln, []).append((m.start(g) - line_start, m.end(g) - line_start))
+                labels.add(label)
+                total += 1
+        if not by_line:
             continue
-        evidence = []
-        for m, label in hits[:MAX_EVIDENCE]:
-            ln = line_of(text, m.start())
-            line = text.splitlines()[ln - 1]
-            red = line.replace(m.group(1) if m.groups() else m.group(0), "[REDACTED]")
-            evidence.append(file_ev(rel, ln, ln, red.strip(), redacted=True))
-        labels = sorted({label for _, label in hits})
+        # Una evidencia por línea, con TODAS las credenciales de esa línea redactadas.
+        evidence = [file_ev(rel, ln, ln, _redact_line(lines[ln - 1], spans).strip(), redacted=True)
+                    for ln, spans in sorted(by_line.items())[:MAX_EVIDENCE]]
         out.append(make_finding(rule, evidence,
-                                f"Se detectaron {len(hits)} posibles credenciales ({', '.join(labels)}). "
+                                f"Se detectaron {total} posibles credenciales ({', '.join(sorted(labels))}). "
                                 "El valor se omite en el informe.", group="secretos"))
     return out
 

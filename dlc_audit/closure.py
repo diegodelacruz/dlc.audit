@@ -1,12 +1,14 @@
 """Verifica el cierre del integrador contra el repositorio real (no se confía en lo declarado)."""
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from .gitops import GitError, _run
 
 STATUSES = ("fixed", "not_applicable", "not_fixed", "partial")
 NEEDS_NOTE = ("not_applicable", "not_fixed", "partial")
+HEX = re.compile(r"^[0-9a-f]{7,40}$")
 REQUIRED = ("run_id", "base_revision", "head_revision", "branch", "findings")
 
 
@@ -23,7 +25,14 @@ def check_closure(baseline: dict, cierre: dict, repo: Path) -> dict:
     if errors:
         return {"errors": errors, "warnings": warnings, "changed_files": [], "claims": {}}
 
-    base, head = baseline["target"]["revision"], cierre["head_revision"]
+    base, head = baseline["target"]["revision"], str(cierre["head_revision"])
+    # El cierre es dato no confiable: ningún valor llega a git sin validarse como SHA.
+    if not HEX.match(head):
+        errors.append(f"cierre: head_revision inválida ({head[:40]!r}); se esperaba un SHA hexadecimal.")
+        return {"errors": errors, "warnings": warnings, "changed_files": [], "claims": {}}
+    if not HEX.match(str(base)):
+        errors.append("cierre: la revisión del baseline no es un SHA válido.")
+        return {"errors": errors, "warnings": warnings, "changed_files": [], "claims": {}}
     if cierre["run_id"] != baseline["run_id"]:
         errors.append(f"cierre: run_id {cierre['run_id']} no corresponde al baseline {baseline['run_id']}.")
     if cierre["base_revision"] != base:
@@ -71,6 +80,9 @@ def check_closure(baseline: dict, cierre: dict, repo: Path) -> dict:
             if status == "fixed" and not commits:
                 errors.append(f"cierre: {fid} (fixed) sin commits.")
             for c in commits:
+                if not HEX.match(str(c)):
+                    errors.append(f"cierre: {fid} cita un commit inválido ({str(c)[:40]!r}).")
+                    continue
                 full = _run(["rev-parse", "--verify", "-q", f"{c}^{{commit}}"], cwd=repo, check=False).stdout.strip()
                 if not full:
                     errors.append(f"cierre: {fid} cita el commit {c} que no existe.")

@@ -4,6 +4,16 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-26
+
+### Corregido
+
+- `TRN-001`: si una línea contenía varias credenciales, solo se redactaba la primera y las demás llegaban al informe. Ahora se redactan todas y hay una evidencia por línea.
+- `publish`: ya no publica archivos sueltos de la carpeta del run; solo `hallazgos.json`, `informe.md`, `prompt-integrador.md` y `prompts/*.md`.
+- `fetch`: rechaza reutilizar `work/<nombre>` si el origen es otro repositorio con el mismo nombre.
+- Datos no confiables hacia git: `ref`, SHAs del cierre del integrador y `baseline_run_id` leídos de ramas remotas se validan antes de usarse (evita inyección de opciones).
+- Pruebas de endurecimiento (`tests/test_hardening.py`).
+
 ## [0.3.0] - 2026-11-26
 
 ### Añadido
