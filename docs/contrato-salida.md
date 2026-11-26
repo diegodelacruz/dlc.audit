@@ -16,7 +16,7 @@ audits/<repo>/<run_id>/
 
 La misma carpeta se publica en la rama `audit/<run_id>` del repositorio auditado como `.audit/<run_id>/` (con `target.path` anonimizado).
 
-`run_id` = `YYYYMMDDTHHMMZ-<repo>`.
+`run_id` = `YYYYMMDDTHHMMSSZ-<repo>` en la ronda 1 y `YYYYMMDDTHHMMSSZ-r<N>-<repo>` desde la ronda 2.
 
 ## Documento del run (`hallazgos.json`)
 
@@ -87,6 +87,11 @@ En `--final` no puede quedar ninguna regla en `pending`.
 
 `closure` genera `closure-check.json`: `errors`, `warnings` (deriva, archivos declarados que no cambiaron, commits fuera de rango), `changed_files`, `claims` y `contradicted` (declarados `fixed` que la nueva auditoría sigue detectando).
 
+## Cierre del ciclo
+
+- `cleanup` genera `audits/<repo>/ciclo-<run_id-final>.json` (`run_ids`, `deleted`, `dry_run`, `verdict`) y archiva en `audits/<repo>/<run_id>/` los registros de cada rama antes de borrarla.
+- `merge-prompt` genera `prompt-merge.md` (prompt C) junto al run final. No se genera si la rama auditada ya es la principal.
+
 ## Severidad
 
 | Nivel | Criterio |
@@ -134,4 +139,5 @@ Selecciona catálogos, deshabilita reglas, sobrescribe severidades, define exclu
 | Clave | Uso |
 |---|---|
 | `approval` | `block_on`: severidades que impiden la aprobación; `unverified_blocks`: si los no verificados bloquean (por defecto no) |
+| `merge` | `strategy` del prompt de merge: `no-ff` (por defecto), `squash` o `ff-only` |
 | `handoff` | Por rol (`integrator`, `auditor`): `conversation` (`MISMA` o `NUEVA`) y `reason`. Se imprimen en la cabecera de cada prompt |

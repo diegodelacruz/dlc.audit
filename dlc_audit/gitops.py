@@ -137,3 +137,110 @@ def publish(run_path: Path, push: bool = False, remote_url: str | None = None) -
         return result
     finally:
         shutil.rmtree(work, ignore_errors=True)
+
+
+# ---------------------------------------------------------------- cierre del ciclo
+
+BRANCH_RE = re.compile(r"^audit/\d{8}T\d{4,6}Z-[\w.-]+$")
+
+
+def default_branch(repo: Path) -> str:
+    head = _run(["symbolic-ref", "-q", "--short", "refs/remotes/origin/HEAD"], cwd=repo, check=False).stdout.strip()
+    return head.removeprefix("origin/") or "main"
+
+
+def _remote_branch_exists(repo: Path, branch: str) -> bool:
+    return _run(["rev-parse", "--verify", "-q", f"refs/remotes/origin/{branch}"], cwd=repo, check=False).returncode == 0
+
+
+def cycle_branches(repo: Path, final_run: dict) -> tuple[list[dict], list[str]]:
+    """Ramas audit/* del ciclo: se siguen los baseline_run_id desde el run final, leyendo cada rama del remoto."""
+    found: list[dict] = []
+    notes: list[str] = []
+    ids: list[str] = []
+    if _remote_branch_exists(repo, f"audit/{final_run['run_id']}"):
+        ids.append(final_run["run_id"])
+    rid, seen = final_run.get("baseline_run_id"), set(ids)
+    while rid and rid not in seen:
+        seen.add(rid)
+        ids.append(rid)
+        branch = f"audit/{rid}"
+        if not _remote_branch_exists(repo, branch):
+            notes.append(f"La rama {branch} ya no existe en el remoto; la cadena se corta aquí.")
+            ids.pop()
+            break
+        data = json.loads(read_remote_file(repo, branch, f".audit/{rid}/hallazgos.json"))
+        rid = data.get("baseline_run_id")
+    for rid in ids:
+        branch = f"audit/{rid}"
+        data = json.loads(read_remote_file(repo, branch, f".audit/{rid}/hallazgos.json"))
+        found.append({"run_id": rid, "branch": branch, "base_revision": data["target"]["revision"]})
+    return found, notes
+
+
+def _archive_branch(repo: Path, entry: dict, archive_dir: Path) -> int:
+    """Copia .audit/<run_id>/ de la rama a archive_dir/<run_id>/ sin sobrescribir lo existente."""
+    prefix = f".audit/{entry['run_id']}/"
+    names = _run(["ls-tree", "-r", "--name-only", f"origin/{entry['branch']}", "--", prefix], cwd=repo).stdout.split("\n")
+    copied = 0
+    for name in filter(None, names):
+        dest = archive_dir / entry["run_id"] / name[len(prefix):]
+        if dest.exists():
+            continue
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(read_remote_file(repo, entry["branch"], name), encoding="utf-8", newline="\n")
+        copied += 1
+    return copied
+
+
+def cleanup(repo: Path, final_run: dict, archive_dir: Path, delete: bool = False,
+            allow_observations: bool = False) -> dict:
+    """Archiva y (con delete=True) borra del remoto las ramas audit/* del ciclo aprobado."""
+    from .common import load_profile, verdict
+    from .validate import validate_run
+
+    errors, _ = validate_run(final_run, repo, final=True)
+    if errors:
+        raise GitError("El run final no pasa validate --final: " + "; ".join(errors[:3]))
+    dictamen = verdict(final_run["findings"], load_profile(final_run["profile"]["name"]))
+    allowed = ("APROBADO", "APROBADO CON OBSERVACIONES") if allow_observations else ("APROBADO",)
+    if dictamen not in allowed:
+        raise GitError(f"El dictamen es {dictamen}: el ciclo no está cerrado; no se borra nada.")
+
+    _run([*NO_HOOKS, "fetch", "--all", "--prune", "-q"], cwd=repo)
+    url = _run(["remote", "get-url", "origin"], cwd=repo).stdout.strip()
+    entries, notes = cycle_branches(repo, final_run)
+    report = {"verdict": dictamen, "deleted": [], "refused": [], "kept": [], "archived": 0, "notes": notes,
+              "dry_run": not delete}
+    for e in entries:
+        branch, rid = e["branch"], e["run_id"]
+        if not BRANCH_RE.match(branch):
+            report["refused"].append({"branch": branch, "reason": "nombre fuera del patrón audit/<run_id>"})
+            continue
+        tip = _run(["rev-parse", f"origin/{branch}"], cwd=repo).stdout.strip()
+        # publish crea exactamente un commit cuyo padre es la revisión auditada.
+        parents = _run(["rev-list", "--parents", "-n", "1", tip], cwd=repo).stdout.split()[1:]
+        changed = _run(["diff", "--name-only", e["base_revision"], tip], cwd=repo, check=False).stdout.split()
+        outside = [c for c in changed if not c.startswith(f".audit/{rid}/")][:3]
+        if parents != [e["base_revision"]] or not changed or outside:
+            why = []
+            if parents != [e["base_revision"]]:
+                why.append("no es un único commit sobre la revisión auditada (hay commits adicionales o historia distinta)")
+            if outside:
+                why.append(f"cambios fuera de .audit/{rid}/: {outside}")
+            if not changed:
+                why.append("sin cambios")
+            report["refused"].append({"branch": branch, "reason": "; ".join(why)})
+            continue
+        report["archived"] += _archive_branch(repo, e, archive_dir)
+        if delete:
+            _run([*NO_HOOKS, "push", "-q", url, "--delete", branch], cwd=repo)
+            report["deleted"].append(branch)
+        else:
+            report["kept"].append(branch)
+    if delete:
+        _run([*NO_HOOKS, "fetch", "--prune", "-q"], cwd=repo, check=False)
+    others = _run(["for-each-ref", "--format=%(refname:strip=3)", "refs/remotes/origin/audit/"], cwd=repo).stdout.split()
+    mine = {e["branch"] for e in entries}
+    report["not_in_cycle"] = sorted(b for b in others if b not in mine)
+    return report

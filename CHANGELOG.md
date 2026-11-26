@@ -4,6 +4,21 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-26
+
+### Añadido
+
+- Cierre del ciclo: `cleanup` archiva los registros y elimina del remoto las ramas `audit/*` del ciclo aprobado (cadena por `baseline_run_id`), con simulación por defecto, dictamen `APROBADO` obligatorio y rechazo de ramas que contengan algo distinto de `.audit/<run_id>/`.
+- `merge-prompt`: prompt autosuficiente para que el integrador integre la rama aprobada; se detiene si la rama tiene commits no auditados o si la rama principal avanzó; estrategia configurable (`merge` del perfil).
+- Las skills preguntan al usuario si genera el prompt de merge; no lo generan sin respuesta afirmativa.
+- Pruebas del cierre de ciclo (archivado, borrado acotado, rama manipulada, rama ajena, dictamen no aprobado).
+
+### Cambiado
+
+- `run_id` incluye segundos y, desde la ronda 2, el número de ronda (`...-r2-...`): evita colisiones entre rondas consecutivas.
+- Regla inviolable 1 de `AGENTS.md`: únicas escrituras remotas permitidas = crear y, al cerrar el ciclo, borrar ramas `audit/<run_id>`.
+- Perfil `default` v1.2.0 (`merge`).
+
 ## [0.2.0] - 2026-11-26
 
 ### Añadido

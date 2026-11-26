@@ -147,12 +147,51 @@ def render_integrator_prompt(run: dict, out_dir: Path, root: Path = ROOT) -> Pat
         verdict=verdict(run["findings"], profile), n_total=len(findings),
         n_blocking=sum(1 for f in findings if is_blocking(f, profile)),
         summary_table="\n".join(rows), audit_branch=f"audit/{run['run_id']}", run_id=run["run_id"],
-        short_run=run["run_id"][:13], closure_json=closure_json,
+        short_run=run["run_id"].split("-")[0], closure_json=closure_json,
         conv_i=conv_i, why_i=why_i, conv_a=conv_a, why_a=why_a,
     )
     path = out_dir / "prompt-integrador.md"
     path.write_text(text, encoding="utf-8", newline="\n")
     return path
+
+
+MERGE_COMMANDS = {
+    "no-ff": ["git checkout {base}", "git pull --ff-only origin {base}",
+              'git merge --no-ff origin/{branch} -m "Integra {branch} (auditoría aprobada {run})"'],
+    "squash": ["git checkout {base}", "git pull --ff-only origin {base}", "git merge --squash origin/{branch}",
+               'git commit -m "Integra {branch} (auditoría aprobada {run})"'],
+    "ff-only": ["git checkout {base}", "git pull --ff-only origin {base}", "git merge --ff-only origin/{branch}"],
+}
+
+
+def render_merge_prompt(final_run: dict, branch: str, base: str, cycle_run_ids: list[str],
+                        root: Path = ROOT) -> str | None:
+    """Prompt para que el integrador integre la rama aprobada. None si no hay nada que integrar."""
+    if branch == base:
+        return None
+    profile = load_profile(final_run["profile"]["name"], root)
+    strategy = profile.get("merge", {}).get("strategy", "no-ff")
+    if strategy not in MERGE_COMMANDS:
+        raise ValueError(f"Estrategia de merge desconocida: {strategy}")
+    fmt = {"base": base, "branch": branch, "run": final_run["run_id"]}
+    indent = "   "
+    merge_cmds = "\n".join(indent + c.format(**fmt) for c in MERGE_COMMANDS[strategy])
+    run_ids = list(dict.fromkeys([*cycle_run_ids, final_run["run_id"]]))
+    cleanup = [f"{indent}git worktree remove --force ../audit-{rid.split('-')[0]}   # ignora el error si no existe" for rid in run_ids]
+    cleanup += [f"{indent}git worktree prune"]
+    cleanup += [f"{indent}git branch -D audit/{rid}   # ignora el error si no existe" for rid in run_ids]
+    cleanup += [f"{indent}git fetch origin --prune"]
+    conv, why = _conversation(profile, "integrator")
+    return _template("prompt-merge.md.tmpl", root).substitute(
+        conv=conv, why=why, repo_url=final_run["target"].get("url") or final_run["target"]["name"],
+        branch=branch, base=base, approved_sha=final_run["target"]["revision"],
+        verdict=verdict(final_run["findings"], profile), final_run_id=final_run["run_id"],
+        n_rounds=final_run.get("round", 1), strategy=strategy, merge_commands=merge_cmds,
+        cleanup_commands="\n".join(cleanup),
+        correction_branch_step=(f"Si creaste `{branch}` exclusivamente para esta auditoría y ya quedó integrada en `{base}`, "
+                                f"elimínala (`git push origin --delete {branch}` y `git branch -d {branch}`). "
+                                "Si no estás seguro de que sea exclusiva de esta auditoría, no la elimines y repórtalo."),
+    )
 
 
 def _delta(run: dict, baseline: dict) -> str:

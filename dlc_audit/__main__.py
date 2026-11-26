@@ -8,8 +8,8 @@ from pathlib import Path
 
 from .closure import check_closure, cross_check
 from .common import load_json, save_json, utc_now
-from .gitops import GitError, fetch, publish
-from .render import render_integrator_prompt, render_prompts, render_report
+from .gitops import GitError, cleanup, default_branch, fetch, publish
+from .render import render_integrator_prompt, render_merge_prompt, render_prompts, render_report
 from .scan import run_scan
 from .validate import validate_run
 
@@ -104,6 +104,49 @@ def cmd_closure(args: argparse.Namespace) -> int:
     return 1 if check["errors"] else 0
 
 
+def cmd_cleanup(args: argparse.Namespace) -> int:
+    final = load_json(Path(args.run))
+    archive = Path(args.archive_dir) if args.archive_dir else Path("audits") / final["target"]["name"]
+    try:
+        rep = cleanup(Path(args.repo), final, archive, delete=args.delete, allow_observations=args.allow_observations)
+    except GitError as exc:
+        print(f"ERROR: {exc}")
+        return 1
+    run_ids = [b.removeprefix("audit/") for b in rep["deleted"] + rep["kept"]]
+    save_json(archive / f"ciclo-{final['run_id']}.json", {
+        "final_run_id": final["run_id"], "branch": final["target"].get("ref"), "run_ids": run_ids,
+        "deleted": rep["deleted"], "dry_run": rep["dry_run"], "verdict": rep["verdict"]})
+    print(f"Dictamen: {rep['verdict']} | archivos archivados en {archive}: {rep['archived']}")
+    for b in rep["deleted"]:
+        print(f"ELIMINADA: {b}")
+    for b in rep["kept"]:
+        print(f"SE ELIMINARÍA (simulación, use --delete): {b}")
+    for r in rep["refused"]:
+        print(f"RECHAZADA: {r['branch']}: {r['reason']}")
+    for b in rep["not_in_cycle"]:
+        print(f"NO TOCADA (no pertenece a este ciclo): {b}")
+    for n in rep["notes"]:
+        print(f"AVISO: {n}")
+    return 1 if rep["refused"] else 0
+
+
+def cmd_merge_prompt(args: argparse.Namespace) -> int:
+    final = load_json(Path(args.run))
+    repo = Path(args.repo)
+    base = args.base or default_branch(repo)
+    branch = args.branch or final["target"].get("ref")
+    cycle_file = Path(args.cycle) if args.cycle else Path("audits") / final["target"]["name"] / f"ciclo-{final['run_id']}.json"
+    ids = load_json(cycle_file)["run_ids"] if cycle_file.is_file() else []
+    text = render_merge_prompt(final, branch, base, ids)
+    if text is None:
+        print(f"No hay merge pendiente: la rama auditada ({branch}) ya es la rama principal ({base}).")
+        return 0
+    out = Path(args.out) if args.out else Path(args.run).with_name("prompt-merge.md")
+    out.write_text(text, encoding="utf-8", newline="\n")
+    print(f"Prompt de merge: {out} (rama {branch} -> {base})")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="dlc_audit", description="Auditor independiente de repositorios (solo lectura).")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -151,6 +194,23 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--new-run", help="hallazgos.json de la re-auditoría, para detectar correcciones contradichas.")
     p.add_argument("--out")
     p.set_defaults(func=cmd_closure)
+
+    p = sub.add_parser("cleanup", help="Archiva y elimina las ramas audit/* de un ciclo aprobado.")
+    p.add_argument("run", help="hallazgos.json de la ronda final (dictamen APROBADO).")
+    p.add_argument("--repo", required=True, help="Clon del repositorio auditado.")
+    p.add_argument("--archive-dir", help="Dónde guardar los registros (por defecto audits/<repo>).")
+    p.add_argument("--delete", action="store_true", help="Elimina las ramas del remoto. Sin esto solo simula.")
+    p.add_argument("--allow-observations", action="store_true", help="Acepta también APROBADO CON OBSERVACIONES.")
+    p.set_defaults(func=cmd_cleanup)
+
+    p = sub.add_parser("merge-prompt", help="Genera el prompt para que el integrador integre la rama aprobada.")
+    p.add_argument("run", help="hallazgos.json de la ronda final aprobada.")
+    p.add_argument("--repo", required=True, help="Clon del repositorio auditado.")
+    p.add_argument("--branch", help="Rama a integrar (por defecto, la auditada en la ronda final).")
+    p.add_argument("--base", help="Rama principal (por defecto, la rama por defecto del remoto).")
+    p.add_argument("--cycle", help="ciclo-<run_id>.json generado por cleanup.")
+    p.add_argument("--out")
+    p.set_defaults(func=cmd_merge_prompt)
 
     args = parser.parse_args(argv)
     try:

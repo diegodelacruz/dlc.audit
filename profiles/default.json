@@ -1,6 +1,6 @@
 {
   "name": "default",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Perfil base: todos los catálogos de Fase 1 con severidades por defecto.",
   "catalogs": [
     "transversal",
@@ -56,5 +56,9 @@
       "conversation": "MISMA",
       "reason": "conserva la ronda anterior y ahorra pasos; si ya no existe, abre una NUEVA sesión en el repositorio dlc.audit: el prompt es autosuficiente"
     }
+  },
+  "merge": {
+    "strategy": "no-ff",
+    "description": "Estrategia del prompt de merge: no-ff, squash o ff-only."
   }
 }

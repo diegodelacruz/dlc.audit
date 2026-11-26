@@ -51,7 +51,11 @@ El integrador responde con el **prompt B** (cierre). Pégalo en el auditor:
 <pega aquí el cierre completo>
 ```
 
-El auditor verifica lo declarado contra el repositorio, audita todo de nuevo, compara con la ronda anterior y emite el dictamen. Si no es `APROBADO`, te entrega un nuevo prompt A. El ciclo termina con `APROBADO`.
+El auditor verifica lo declarado contra el repositorio, audita todo de nuevo, compara con la ronda anterior y emite el dictamen. Si no es `APROBADO`, te entrega un nuevo prompt A.
+
+### Cierre del ciclo
+
+Con `APROBADO`, el auditor archiva los registros, **elimina las ramas `audit/*` del ciclo** y te **pregunta si genera el prompt de merge** a la rama principal. El merge lo ejecuta el integrador con ese prompt; el auditor no modifica nada más del repositorio auditado.
 
 ### Manual (sin skills)
 
@@ -66,13 +70,17 @@ python -m dlc_audit publish <hallazgos.json> --push
 # ronda 2
 python -m dlc_audit closure --baseline <baseline.json> --cierre <cierre.json> --repo <ruta-clon>
 python -m dlc_audit scan <ruta-clon> --ref <rama> --baseline <baseline.json>
+# cierre del ciclo (dictamen APROBADO)
+python -m dlc_audit cleanup <final.json> --repo <ruta-clon>            # simulación
+python -m dlc_audit cleanup <final.json> --repo <ruta-clon> --delete   # archiva y borra audit/*
+python -m dlc_audit merge-prompt <final.json> --repo <ruta-clon>       # solo si aceptas
 ```
 
-Requisito: permiso de **escritura** en el repositorio auditado, solo para empujar la rama `audit/<run_id>`.
+Requisito: permiso de **escritura** en el repositorio auditado, solo para crear y borrar ramas `audit/<run_id>`.
 
 ## Garantías de diseño
 
-- **El código auditado no se modifica.** La única escritura es una rama nueva `audit/<run_id>` con archivos bajo `.audit/<run_id>/`; `publish` aborta si el diff toca otra ruta, nunca fuerza el push y la rama no se fusiona.
+- **No se modifica nada del repositorio auditado.** Solo se crean ramas `audit/<run_id>` (con archivos bajo `.audit/<run_id>/`) y, al aprobar, se borran las del ciclo. `publish` aborta si el diff toca otra ruta; `cleanup` aborta si una rama contiene otra cosa; nunca hay force push ni merge de ramas de auditoría.
 - **El cierre del integrador se verifica, no se cree:** commits, archivos, deriva (cambios no declarados) y correcciones declaradas que siguen presentes.
 - **Dictamen explícito** y configurable (`approval` en el perfil).
 - **Prompts autosuficientes** con indicación `MISMA` o `NUEVA` conversación (`handoff` en el perfil).

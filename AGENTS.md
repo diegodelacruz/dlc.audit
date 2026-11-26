@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Reglas para agentes que modifiquen u operen este repositorio. Versión 1.1.
+Reglas para agentes que modifiquen u operen este repositorio. Versión 1.2.
 
 ## 1. Propósito
 
@@ -8,7 +8,11 @@ Reglas para agentes que modifiquen u operen este repositorio. Versión 1.1.
 
 ## 2. Reglas inviolables (modo auditor)
 
-1. **No modificar el código auditado.** La única escritura permitida en el repositorio objetivo es crear una rama nueva `audit/<run_id>` con archivos bajo `.audit/<run_id>/`, a partir de la revisión auditada, mediante `python -m dlc_audit publish`. Nunca escribir en la rama auditada, nunca force push, nunca fusionar la rama de auditoría. Las demás escrituras van en `audits/` y `work/` de este repositorio.
+1. **No modificar nada del repositorio auditado.** Solo se permiten dos escrituras remotas, ambas sobre ramas `audit/<run_id>`:
+   - **Crear** una rama nueva con archivos bajo `.audit/<run_id>/`, a partir de la revisión auditada (`publish`).
+   - **Borrar** las ramas `audit/<run_id>` del ciclo cuando el dictamen es `APROBADO` (`cleanup --delete`), tras archivar sus registros y comprobar que cada rama contiene solo `.audit/<run_id>/`.
+
+   Prohibido: escribir en la rama auditada o en la del integrador, force push, fusionar ramas de auditoría, borrar ramas que no sean de este ciclo. El auditor tampoco ejecuta el merge a la rama principal: lo hace el integrador con el prompt generado. Las demás escrituras van en `audits/` y `work/` de este repositorio.
 2. **Sin evidencia no hay hallazgo.** Todo hallazgo cita `ruta:línea` y un extracto literal. `validate` lo verifica contra el archivo real.
 3. **Marcar la certeza** en cada hallazgo: `verified`, `inferential` o `unverified` (verificado, **[Inferencial]**, **[No verificado]**).
 4. **Nunca copiar secretos** al informe, a los prompts ni a la rama publicada. La evidencia de secretos se redacta.
@@ -43,9 +47,15 @@ Ronda N+1 (skill `reaudit`), al recibir el cierre del integrador:
 2. `closure` → `scan --baseline` → evaluación completa → `validate --final` → `closure --new-run` → `render --baseline --closure` → `publish --push` (si hay hallazgos).
 3. Dictamen. Si no es `APROBADO`, entregar el nuevo `prompt-integrador.md`.
 
+Cierre del ciclo (dictamen `APROBADO`, skill `reaudit`):
+
+1. `cleanup` en simulación, revisar y `cleanup --delete`: archiva los registros y elimina las ramas `audit/*` del ciclo.
+2. **Preguntar al usuario** si genera el prompt de merge. Solo con respuesta afirmativa: `merge-prompt`.
+
 ## 5. Definition of Done de una ronda
 
 - `validate --final` sin errores y ninguna regla aplicable en `pending`.
 - `executive_summary` y `limitations` completos.
 - Informe, prompt del integrador y (si hay hallazgos) rama `audit/<run_id>` publicados.
+- Al aprobar: ramas del ciclo eliminadas, registros archivados y pregunta del merge formulada.
 - Dictamen explícito en el informe y en el reporte al usuario.

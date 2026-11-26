@@ -5,7 +5,7 @@
 | Rol | Quién | Hace | No hace |
 |---|---|---|---|
 | Integrador | Agente de Claude Code en el repositorio de trabajo | Construye, modifica y elimina. Corrige lo que el auditor observa | No audita su propio trabajo; no decide si un hallazgo es válido |
-| Auditor | Este repositorio (`dlc.audit`) | Audita por enlace, publica observaciones, verifica el cierre y dictamina | No modifica el código auditado |
+| Auditor | Este repositorio (`dlc.audit`) | Audita por enlace, publica observaciones, verifica el cierre y dictamina | No modifica nada del repositorio auditado salvo crear y, al cerrar, borrar ramas `audit/*` |
 | Usuario | Tú | Traslada dos mensajes entre agentes | |
 
 El auditor es externo y aislado para que el repositorio modificado no sea juez y parte.
@@ -30,6 +30,18 @@ El auditor es externo y aislado para que el repositorio modificado no sea juez y
 ```
 
 Termina con el dictamen `APROBADO`. Cada ronda cuesta exactamente dos pegados: A al integrador y B al auditor.
+
+## Cierre del ciclo
+
+Con dictamen `APROBADO`:
+
+1. **Limpieza (automática):** el auditor archiva en `audits/<repo>/<run_id>/` los registros de cada ronda y elimina del remoto las ramas `audit/*` del ciclo. Las ramas se identifican siguiendo `baseline_run_id` desde el run final; no se borra ninguna otra. Antes de borrar cada una se comprueba que contiene únicamente `.audit/<run_id>/`; si alguien le añadió código, se rechaza y se informa.
+2. **Pregunta al usuario:** ¿genera el prompt de merge a la rama principal?
+3. **Prompt C (merge), solo si se acepta:** lo ejecuta el integrador. Se detiene si la rama tiene commits posteriores a la auditoría o si la rama principal avanzó (el resultado del merge no habría sido auditado), no fuerza el push, y retira worktrees y ramas locales de la auditoría.
+
+Con `APROBADO CON OBSERVACIONES` se pregunta antes: cerrar aceptándolas u otra ronda. Con `NO APROBADO` no se borra nada.
+
+El auditor **no hace** el merge: no modifica nada del repositorio auditado.
 
 ## Los dos prompts
 
@@ -59,6 +71,7 @@ Requisito para el auditor en conversación nueva: abrir la sesión en el reposit
 |---|---|
 | El auditor no toca el código | `publish` crea la rama en un clon temporal y aborta si el diff contra la revisión auditada toca algo fuera de `.audit/<run_id>/` |
 | La rama auditada no cambia | No hay push a ella; no hay force push |
+| El borrado es acotado | `cleanup` solo borra ramas del ciclo con nombre `audit/<run_id>` y contenido exclusivo de `.audit/<run_id>/`; archiva antes de borrar; el dictamen debe ser `APROBADO` |
 | El auditor no cree al integrador | `closure` contrasta cada declaración (commits, archivos) con el repositorio |
 | No se esconden cambios | Cualquier archivo cambiado que nadie declaró se reporta como **deriva** |
 | No se declara lo no hecho | Un `fixed` cuyo hallazgo sigue detectándose se reporta como **contradicho** |
@@ -89,7 +102,9 @@ La decisión sobre `not_applicable` y `not_fixed` es del auditor: si la evidenci
 ## Riesgos y límites [Inferencial]
 
 - **Permisos:** publicar la rama exige escritura en el repositorio auditado. Sin ella, el flujo se detiene antes de `publish` y el prompt A no es utilizable (el integrador no tendría el detalle). Alternativa no implementada: entregar el detalle completo en el prompt.
-- **Acumulación de ramas `audit/*`:** una por ronda; la limpieza es manual.
+- **Ramas `audit/*`:** una por ronda; se eliminan al cerrar el ciclo. Si el ciclo se abandona sin `APROBADO`, quedan hasta que se cierre otro ciclo o se borren a mano.
+- **Registros tras el borrado:** el único historial es `audits/<repo>/` (ignorado por git). En sesión en la nube es efímero.
+- **Permiso de borrado:** eliminar ramas remotas exige escritura; si el remoto lo rechaza, `cleanup` falla y se informa sin reintentar por otra vía.
 - **Repositorios privados en la nube:** requieren adjuntar el repositorio a la sesión con acceso de escritura.
 - **Archivos renombrados** durante la corrección cambian la huella y aparecen como resuelto más nuevo.
 - **Confianza en el integrador:** el cierre es un dato, no una orden; sus textos se tratan como no confiables.

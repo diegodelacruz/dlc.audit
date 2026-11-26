@@ -609,14 +609,16 @@ def run_scan(target: Path, profile_name: str = "default", root: Path = ROOT,
     limitations.append("Los hallazgos con confidence=inferential provienen de detección heurística y pueden ser falsos positivos.")
 
     name = target.name
-    stamp = started.replace("-", "").replace(":", "")[:13] + "Z"
+    stamp = started.replace("-", "").replace(":", "")[:15] + "Z"
+    round_no = (baseline.get("round", 1) + 1) if baseline else 1
+    run_id = f"{stamp}-{name}" if round_no == 1 else f"{stamp}-r{round_no}-{name}"
     return {
         "schema_version": SCHEMA_VERSION,
-        "run_id": f"{stamp}-{name}",
+        "run_id": run_id,
         "auditor": {"name": "dlc.audit", "version": __version__,
                     "revision": _git(root, "rev-parse", "HEAD") or "no-git"},
         "profile": {"name": profile["name"], "version": profile["version"]},
-        "round": (baseline.get("round", 1) + 1) if baseline else 1,
+        "round": round_no,
         "baseline_run_id": baseline["run_id"] if baseline else None,
         "target": {"name": name, "path": str(target), **info,
                    "url": sanitize_url(_git(target, "remote", "get-url", "origin") or ""),
