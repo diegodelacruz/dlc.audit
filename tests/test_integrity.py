@@ -135,8 +135,7 @@ class PythonHygieneTests(unittest.TestCase):
     def test_no_unused_imports(self):
         unused = []
         for rel in (f for f in tracked() if f.endswith(".py") and not f.endswith("__init__.py")):
-            src = read(rel)
-            tree = ast.parse(src)
+            tree = ast.parse(read(rel))
             imported = {}
             for node in ast.walk(tree):
                 if isinstance(node, ast.Import):
@@ -147,7 +146,7 @@ class PythonHygieneTests(unittest.TestCase):
                         imported[a.asname or a.name] = node.lineno
             used = {n.id for n in ast.walk(tree) if isinstance(n, ast.Name)}
             for name, line in imported.items():
-                if name != "annotations" and name not in used and f'"{name}"' not in src:
+                if name != "annotations" and name not in used:
                     unused.append(f"{rel}:{line} {name}")
         self.assertEqual(unused, [])
 
@@ -164,6 +163,15 @@ class VersionAndIdsTests(unittest.TestCase):
         self.assertEqual(heads[0], ver)
         self.assertEqual(heads, sorted(heads, key=lambda v: tuple(map(int, v.split("."))), reverse=True))
         self.assertEqual(len(heads), len(set(heads)))
+
+    def test_requirement_ids_cited_in_current_documents_exist(self):
+        known = set()
+        for f in (ROOT / "docs" / "cumplimiento").glob("*.md"):
+            known |= set(re.findall(r"^\| ([SAOG]-\d{2}) \|", f.read_text(encoding="utf-8"), re.M))
+        for rel in (f for f in tracked() if f.endswith((".md", ".py", ".json", ".tmpl")) and f != "CHANGELOG.md"
+                    and not f.startswith("docs/cumplimiento/")):
+            for rid in set(re.findall(r"\b([SAOG]-\d{2})\b", read(rel))):
+                self.assertIn(rid, known, f"{rel} cita el requisito {rid}, que no existe en docs/cumplimiento/")
 
     def test_rule_ids_cited_in_current_documents_exist(self):
         rules = {r["id"] for f in (ROOT / "rules").glob("*.json") for r in json.loads(f.read_text(encoding="utf-8"))["rules"]}

@@ -4,9 +4,24 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-11-26
+
+Cierra las observaciones de la re-auditoría de integridad del commit `6f542dd` (veredicto `ÍNTEGRO CON OBSERVACIONES`; 12 correcciones resueltas, sin regresiones).
+
+### Corregido
+
+- `docs/contrato-salida.md`: `purge` también elimina `demo/<repo>/` (AUD-13).
+- `tests/test_integrity.py`: el detector de imports sin usar ya no acepta como usado un nombre que solo aparece entre comillas en el archivo (AUD-14). La parte del hallazgo que decía que no contaba el uso como atributo no era cierta: `ast.walk` ya visita el nombre dentro de `os.getcwd()`.
+- `CHANGELOG.md`: la cifra de 0.8.1 distingue los 11 hallazgos del candidato condicional (AUD-15).
+
+### Añadido
+
+- `tests/test_integrity.py`: los IDs de requisitos (`S-`, `A-`, `O-`, `G-`) citados en documentos vigentes deben existir en `docs/cumplimiento/`.
+
+
 ## [0.8.1] - 2026-11-26
 
-Corrige los hallazgos de la auto-auditoría de integridad del commit `3db7ab0` (12 de 12 confirmados).
+Corrige los hallazgos de la auto-auditoría de integridad del commit `3db7ab0` (11 hallazgos más 1 candidato condicional: 12 puntos, todos confirmados).
 
 ### Corregido
 
