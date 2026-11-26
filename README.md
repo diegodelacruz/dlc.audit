@@ -137,6 +137,9 @@ python -m unittest discover -s tests
 
 - [Protocolo auditor-integrador](docs/protocolo.md)
 - [Multiplataforma](docs/multiplataforma.md)
+- [Cumplimiento de plataformas (fuentes y citas)](docs/cumplimiento/plataformas.md)
+- [Registro de decisiones](docs/decisiones/README.md)
+- [Criterios de octubre y su estado](docs/criterios.md)
 - [Alcance y fases](docs/alcance.md)
 - [Contrato de salida](docs/contrato-salida.md)
 - [Metodología](docs/metodologia.md)
