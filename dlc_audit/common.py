@@ -4,8 +4,10 @@ from __future__ import annotations
 import datetime as dt
 import hashlib
 import json
+import os
 import re
 import subprocess
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -26,12 +28,37 @@ CONFIDENCE_LABEL = {
 }
 
 
+class PolicyError(Exception):
+    """Se intentó una acción que la política de dlc.audit prohíbe."""
+
+
+def ensure_outside_repo(path: Path) -> Path:
+    """Barrera: en este repositorio no se guarda ningún informe de auditoría, ni en git ni en disco."""
+    resolved = Path(path).expanduser().resolve()
+    try:
+        resolved.relative_to(ROOT)
+    except ValueError:
+        return resolved
+    raise PolicyError(
+        f"{resolved} está dentro del repositorio dlc.audit. Este repositorio no guarda informes de auditoría "
+        "bajo ningún concepto; use una ruta fuera de él (por defecto, el directorio de trabajo temporal)."
+    )
+
+
+def workdir() -> Path:
+    """Directorio de trabajo temporal, fuera del repositorio. Se puede fijar con DLC_AUDIT_WORKDIR."""
+    base = os.environ.get("DLC_AUDIT_WORKDIR")
+    path = Path(base) if base else Path(tempfile.gettempdir()) / "dlc-audit"
+    return ensure_outside_repo(path)
+
+
 def load_json(path: Path) -> dict:
     with open(path, encoding="utf-8") as fh:
         return json.load(fh)
 
 
 def save_json(path: Path, data: dict) -> None:
+    path = ensure_outside_repo(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
         json.dump(data, fh, ensure_ascii=False, indent=2)

@@ -70,7 +70,6 @@ class ClosingTests(unittest.TestCase):
         git(src, "push", "-q", "origin", "audit/20260101T0000Z-origin")
         git(src, "checkout", "-q", "main")
         fetch(str(self.remote), self.work, "fix/auditoria")
-        self.archive = self.base / "archive"
 
     def publish_run(self, run: dict, out: Path) -> None:
         save_json(out / "hallazgos.json", run)
@@ -79,27 +78,24 @@ class ClosingTests(unittest.TestCase):
         render_report(run, out, index, has_integrator_prompt=True)
         publish(out / "hallazgos.json", push=True)
 
-    def test_dry_run_archives_but_deletes_nothing(self):
+    def test_dry_run_deletes_nothing(self):
         before = heads(self.remote)
-        rep = cleanup(self.repo, self.run3, self.archive, delete=False)
+        rep = cleanup(self.repo, self.run3, delete=False)
         self.assertTrue(rep["dry_run"])
         self.assertEqual(sorted(rep["kept"]), sorted([f"audit/{self.run1['run_id']}", f"audit/{self.run2['run_id']}"]))
         self.assertEqual(heads(self.remote), before)
-        self.assertTrue((self.archive / self.run1["run_id"] / "hallazgos.json").is_file())
-        self.assertTrue((self.archive / self.run2["run_id"] / "informe.md").is_file())
 
     def test_delete_removes_only_cycle_branches(self):
         main_before = git(self.remote, "rev-parse", "main")
         fix_before = git(self.remote, "rev-parse", "fix/auditoria")
-        rep = cleanup(self.repo, self.run3, self.archive, delete=True)
+        rep = cleanup(self.repo, self.run3, delete=True)
         self.assertEqual(len(rep["deleted"]), 2)
         remaining = heads(self.remote)
         self.assertEqual(remaining, {"main", "fix/auditoria", "audit/20260101T0000Z-origin"})
         self.assertIn("audit/20260101T0000Z-origin", rep["not_in_cycle"])
         self.assertEqual(git(self.remote, "rev-parse", "main"), main_before)
         self.assertEqual(git(self.remote, "rev-parse", "fix/auditoria"), fix_before)
-        # El registro sobrevive al borrado
-        self.assertTrue((self.archive / self.run1["run_id"] / "hallazgos.json").is_file())
+        self.assertNotIn("archived", rep)  # no se guarda ningún registro
 
     def test_refuses_branch_with_code_changes(self):
         tamper = self.base / "tamper"
@@ -110,7 +106,7 @@ class ClosingTests(unittest.TestCase):
         git(tamper, "add", "-A")
         git(tamper, "commit", "-q", "-m", "colado")
         git(tamper, "push", "-q", "origin", branch)
-        rep = cleanup(self.repo, self.run3, self.archive, delete=True)
+        rep = cleanup(self.repo, self.run3, delete=True)
         self.assertEqual([r["branch"] for r in rep["refused"]], [branch])
         self.assertIn("commits adicionales", rep["refused"][0]["reason"])
         self.assertIn("codigo_colado.py", rep["refused"][0]["reason"])
@@ -119,7 +115,7 @@ class ClosingTests(unittest.TestCase):
 
     def test_refuses_when_not_approved(self):
         with self.assertRaises(GitError):
-            cleanup(self.repo, self.run2, self.archive, delete=True)
+            cleanup(self.repo, self.run2, delete=True)
         self.assertEqual(len([h for h in heads(self.remote) if h.startswith("audit/")]), 3)
 
     def test_observations_need_explicit_opt_in(self):
@@ -127,8 +123,8 @@ class ClosingTests(unittest.TestCase):
         low = copy.deepcopy(next(f for f in self.run2["findings"] if f["rule_id"] == "TRN-004"))
         run["findings"] = [low]
         with self.assertRaises(GitError):
-            cleanup(self.repo, run, self.archive, delete=False)
-        rep = cleanup(self.repo, run, self.archive, delete=False, allow_observations=True)
+            cleanup(self.repo, run, delete=False)
+        rep = cleanup(self.repo, run, delete=False, allow_observations=True)
         self.assertEqual(rep["verdict"], "APROBADO CON OBSERVACIONES")
 
     def test_default_branch(self):
@@ -137,12 +133,11 @@ class ClosingTests(unittest.TestCase):
     def test_merge_prompt(self):
         run3 = copy.deepcopy(self.run3)
         run3["target"]["revision"] = self.head
-        ids = [self.run1["run_id"], self.run2["run_id"]]
-        text = render_merge_prompt(run3, "fix/auditoria", "main", ids)
+        text = render_merge_prompt(run3, "fix/auditoria", "main")
         for needle in (self.head, "fix/auditoria", "git merge --no-ff origin/fix/auditoria", "CONVERSACIÓN: MISMA",
-                       f"git worktree remove --force ../audit-{ids[0].split('-')[0]}", "detente", "sin force"):
+                       "git worktree list", 'git branch --list "audit/*"', "detente", "sin force"):
             self.assertIn(needle, text)
-        self.assertIsNone(render_merge_prompt(run3, "main", "main", ids))
+        self.assertIsNone(render_merge_prompt(run3, "main", "main"))
 
 
 if __name__ == "__main__":

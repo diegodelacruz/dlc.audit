@@ -6,7 +6,11 @@ venv/
 .idea/
 .vscode/
 
-# Resultados de auditoría: pueden contener información sensible del objetivo.
+# Defensa en profundidad: este repositorio NO guarda informes de auditoría ni clones de
+# repositorios auditados (ver AGENTS.md). Los archivos de trabajo van al directorio temporal.
+audits/
+auditorias/
+.audit/
 work/
-audits/*
-!audits/.gitkeep
+runs/
+clones/

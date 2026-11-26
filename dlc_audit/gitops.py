@@ -15,7 +15,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from .common import load_json, sanitize_url
+from .common import ensure_outside_repo, load_json, sanitize_url
 
 NO_HOOKS = ["-c", "core.hooksPath=/dev/null"]
 AUDIT_IDENTITY = ["-c", "user.name=dlc.audit", "-c", "user.email=dlc-audit@users.noreply.github.com"]
@@ -74,6 +74,7 @@ def fetch(source: str, dest_root: Path, ref: str | None = None) -> dict:
     """Clona (o actualiza) `source` en dest_root/<nombre> y deja el árbol en `ref` desacoplado."""
     if not safe_source(source):
         raise GitError("Fuente no válida: use una URL https/ssh o una ruta local a un repositorio.")
+    dest_root = ensure_outside_repo(dest_root)
     dest = dest_root / repo_name(source)
     dest_root.mkdir(parents=True, exist_ok=True)
     if (dest / ".git").is_dir():
@@ -204,24 +205,8 @@ def cycle_branches(repo: Path, final_run: dict) -> tuple[list[dict], list[str]]:
     return found, notes
 
 
-def _archive_branch(repo: Path, entry: dict, archive_dir: Path) -> int:
-    """Copia .audit/<run_id>/ de la rama a archive_dir/<run_id>/ sin sobrescribir lo existente."""
-    prefix = f".audit/{entry['run_id']}/"
-    names = _run(["ls-tree", "-r", "--name-only", f"origin/{entry['branch']}", "--", prefix], cwd=repo).stdout.split("\n")
-    copied = 0
-    for name in filter(None, names):
-        dest = archive_dir / entry["run_id"] / name[len(prefix):]
-        if dest.exists():
-            continue
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_text(read_remote_file(repo, entry["branch"], name), encoding="utf-8", newline="\n")
-        copied += 1
-    return copied
-
-
-def cleanup(repo: Path, final_run: dict, archive_dir: Path, delete: bool = False,
-            allow_observations: bool = False) -> dict:
-    """Archiva y (con delete=True) borra del remoto las ramas audit/* del ciclo aprobado."""
+def cleanup(repo: Path, final_run: dict, delete: bool = False, allow_observations: bool = False) -> dict:
+    """Borra del remoto (con delete=True) las ramas audit/* del ciclo aprobado. No guarda ningún registro."""
     from .common import load_profile, verdict
     from .validate import validate_run
 
@@ -236,7 +221,7 @@ def cleanup(repo: Path, final_run: dict, archive_dir: Path, delete: bool = False
     _run([*NO_HOOKS, "fetch", "--all", "--prune", "-q"], cwd=repo)
     url = _run(["remote", "get-url", "origin"], cwd=repo).stdout.strip()
     entries, notes = cycle_branches(repo, final_run)
-    report = {"verdict": dictamen, "deleted": [], "refused": [], "kept": [], "archived": 0, "notes": notes,
+    report = {"verdict": dictamen, "deleted": [], "refused": [], "kept": [], "notes": notes,
               "dry_run": not delete}
     for e in entries:
         branch, rid = e["branch"], e["run_id"]
@@ -258,7 +243,6 @@ def cleanup(repo: Path, final_run: dict, archive_dir: Path, delete: bool = False
                 why.append("sin cambios")
             report["refused"].append({"branch": branch, "reason": "; ".join(why)})
             continue
-        report["archived"] += _archive_branch(repo, e, archive_dir)
         if delete:
             _run([*NO_HOOKS, "push", "-q", url, "--delete", branch], cwd=repo)
             report["deleted"].append(branch)
