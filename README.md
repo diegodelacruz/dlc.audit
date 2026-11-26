@@ -95,6 +95,8 @@ python -m dlc_audit purge <nombre-repo>                                 # últim
 # skills
 python -m dlc_audit skills check                                        # portabilidad y sincronía
 python -m dlc_audit skills sync                                         # regenera las copias desde skills/
+# prueba de punta a punta
+python -m dlc_audit demo                                                # repositorio ficticio con defectos conocidos
 ```
 
 Requisito: permiso de **escritura** en el repositorio auditado, solo para crear y borrar ramas `audit/<run_id>`.
@@ -138,6 +140,7 @@ python -m unittest discover -s tests
 
 - [Protocolo auditor-integrador](docs/protocolo.md)
 - [Multiplataforma](docs/multiplataforma.md)
+- [Prueba de punta a punta en Claude Code](docs/prueba-extremo-a-extremo.md)
 - [Cumplimiento de plataformas (fuentes y citas)](docs/cumplimiento/plataformas.md)
 - [Registro de decisiones](docs/decisiones/README.md)
 - [Criterios de octubre y su estado](docs/criterios.md)

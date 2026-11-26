@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 from .closure import check_closure, cross_check
+from .demo import build_demo
 from .common import PolicyError, ensure_outside_repo, load_json, save_json, utc_now, workdir
 from .gitops import GitError, cleanup, default_branch, fetch, publish
 from .render import render_integrator_prompt, render_merge_prompt, render_prompts, render_report
@@ -170,6 +171,19 @@ def cmd_skills(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_demo(args: argparse.Namespace) -> int:
+    try:
+        info = build_demo(Path(args.out) if args.out else None)
+    except FileExistsError as exc:
+        print(f"ERROR: {exc}")
+        return 1
+    print(f"Repositorio de demostración: {info['path']}")
+    print(f"Commit: {info['revision']} (rama main)")
+    print("El auditor debe detectar como mínimo: " + ", ".join(info["expected"]))
+    print("Súbelo a un repositorio privado y vacío tuyo para probar el ciclo (ver docs/prueba-extremo-a-extremo.md).")
+    return 0
+
+
 def cmd_workdir(args: argparse.Namespace) -> int:
     print(workdir())
     return 0
@@ -184,7 +198,7 @@ def cmd_purge(args: argparse.Namespace) -> int:
         if not args.name or not re.fullmatch(r"[\w.-]+", args.name) or args.name in (".", ".."):
             print("ERROR: indique el nombre del repositorio auditado (o --all).")
             return 2
-        targets = [base / "runs" / args.name, base / "clones" / args.name]
+        targets = [base / "runs" / args.name, base / "clones" / args.name, base / "demo" / args.name]
     removed = 0
     for t in targets:
         if t.exists():
@@ -262,6 +276,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("action", choices=("check", "sync", "package"))
     p.add_argument("--out-dir", help="Solo package: carpeta de salida (por defecto, el directorio temporal; nunca dentro de dlc.audit).")
     p.set_defaults(func=cmd_skills)
+
+    p = sub.add_parser("demo", help="Genera un repositorio ficticio con defectos conocidos para probar el ciclo completo.")
+    p.add_argument("--out", help="Carpeta destino (por defecto, el directorio temporal; nunca dentro de dlc.audit).")
+    p.set_defaults(func=cmd_demo)
 
     p = sub.add_parser("workdir", help="Muestra el directorio de trabajo temporal (fuera del repositorio).")
     p.set_defaults(func=cmd_workdir)

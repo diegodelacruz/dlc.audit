@@ -1,6 +1,6 @@
 # Multiplataforma (bloque 1: definición)
 
-Estado: **aceptada el 2026-11-26** por el usuario. Bloques 2, 3 y 4 implementados; bloque 5 pendiente (ver al final).
+Estado: **aceptada el 2026-11-26** por el usuario. Bloques 2 a 4 implementados; bloque 5 preparado, a la espera de la prueba del usuario (ver al final).
 
 ## Decisiones
 
@@ -81,11 +81,11 @@ skills/                       # fuente única, editable, portable
 | 2 | Fuente única `skills/`, generador y validador de sincronía (`skills check` y `skills sync`), portabilidad de las dos skills, comando `skills package` | **Hecho** |
 | 3 | Portado desde `claude/gallant-babbage-2srymf`: `docs/cumplimiento/` releído de forma literal, `docs/decisiones/` saneadas, criterios C1 a C12 como trazabilidad en `criterios.md` | **Hecho** |
 | 4 | Catálogo de reglas: reglas enlazadas con `docs/cumplimiento/` (`requirements`), `source_verified` contrastado, reglas nuevas (`SKL-013` a `SKL-016`, `TRN-008`, `TRN-009`) y matriz de cumplimiento en el informe | **Hecho** |
-| 5 | Cierre del PR #1 y borrado de la rama de octubre con etiqueta de archivo; prueba de punta a punta en Claude Code por el usuario | Pendiente |
+| 5 | Cierre del PR #1 y de las ramas de octubre; guion y repositorio de demostración para la prueba de punta a punta | **PR #1 cerrado; borrado de ramas y prueba real pendientes del usuario** (`prueba-extremo-a-extremo.md`) |
 
 ## Definition of Done de v1 (plataformas)
 
 1. El validador de sincronía pasa y las copias coinciden con `skills/`.
 2. `docs/cumplimiento/` registra fuente, URL y fecha por plataforma.
-3. **Claude Code:** el usuario completó un ciclo real de punta a punta (L2).
+3. **Claude Code:** el usuario completó un ciclo real de punta a punta (L2), siguiendo `prueba-extremo-a-extremo.md`. **Pendiente.**
 4. Codex, Antigravity y ChatGPT: instalación documentada (L1); su ejecución consta como **[No verificado]** hasta que alguien la pruebe.
