@@ -30,13 +30,26 @@ El catálogo completo está en `rules/*.json` (38 reglas). Qué queda fuera: `do
 
 - Python 3.11 o superior (python.org). Sin dependencias externas.
 - Git en el `PATH`.
-- Claude Code, para las skills y el subagente.
+- Una plataforma de agentes con shell: Claude Code, Codex, Antigravity o ChatGPT con Skills. Ver [Plataformas](#plataformas).
+
+## Plataformas
+
+Las skills siguen el estándar abierto *Agent Skills*. Se abre la plataforma **dentro de un clon de este repositorio** y descubre las skills sola.
+
+| Plataforma | Dónde las encuentra | Estado |
+|---|---|---|
+| Claude Code | `.claude/skills/` | Probable de punta a punta (L2) |
+| Codex | `.agents/skills/` | Instalable (L1). Ejecución **[No verificado]** |
+| Antigravity | `.agents/skills/` | Instalable (L1). Ejecución **[No verificado]** |
+| ChatGPT | Subida del paquete `python -m dlc_audit skills package` | Instalable (L1). Ejecución **[No verificado]**; exige un plan con Skills habilitadas |
+
+Detalle, fuentes y límites: [docs/multiplataforma.md](docs/multiplataforma.md). La fuente única es `skills/`; las copias en `.claude/skills/` y `.agents/skills/` se generan con `python -m dlc_audit skills sync` y **no se editan a mano**.
 
 ## Uso
 
 ### Ronda 1
 
-En Claude Code, dentro de este repositorio:
+En la plataforma, dentro de este repositorio (en Claude Code se invoca como `/audit-repo`):
 
 ```
 /audit-repo https://github.com/<usuario>/<repositorio> [rama-o-commit]
@@ -79,6 +92,9 @@ python -m dlc_audit cleanup <final.json> --repo <ruta-clon>            # simulac
 python -m dlc_audit cleanup <final.json> --repo <ruta-clon> --delete   # borra audit/*; no guarda registros
 python -m dlc_audit merge-prompt <final.json> --repo <ruta-clon>       # solo si aceptas
 python -m dlc_audit purge <nombre-repo>                                 # último paso: borra archivos de trabajo
+# skills
+python -m dlc_audit skills check                                        # portabilidad y sincronía
+python -m dlc_audit skills sync                                         # regenera las copias desde skills/
 ```
 
 Requisito: permiso de **escritura** en el repositorio auditado, solo para crear y borrar ramas `audit/<run_id>`.
@@ -103,9 +119,11 @@ docs/                    protocolo, alcance, contrato de salida, metodología
 rules/                   catálogos de reglas (JSON, versionados)
 profiles/                perfiles: catálogos, severidades, convenciones de prompts
 templates/               plantillas de informe y de prompts (integrador y detalle)
-dlc_audit/               scan, validate, render, fetch, publish, closure (Python, solo biblioteca estándar)
-.claude/agents/          subagente dlc-auditor
-.claude/skills/          audit-repo, reaudit
+dlc_audit/               scan, validate, render, fetch, publish, closure, skills (Python, solo biblioteca estándar)
+skills/                  fuente única de las skills portables (audit-repo, reaudit)
+.claude/skills/          copia generada para Claude Code (no editar)
+.agents/skills/          copia generada para Codex y Antigravity (no editar)
+.claude/agents/          subagente opcional dlc-auditor (solo Claude Code)
 tests/                   pruebas (unittest)
 ```
 
@@ -118,6 +136,7 @@ python -m unittest discover -s tests
 ## Documentación
 
 - [Protocolo auditor-integrador](docs/protocolo.md)
+- [Multiplataforma](docs/multiplataforma.md)
 - [Alcance y fases](docs/alcance.md)
 - [Contrato de salida](docs/contrato-salida.md)
 - [Metodología](docs/metodologia.md)

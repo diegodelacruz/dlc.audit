@@ -61,7 +61,7 @@ def is_agent_file(rel: str) -> bool:
 def domains_of(rel: str) -> set[str]:
     domains: set[str] = set()
     suffix = Path(rel).suffix.lower()
-    if is_skill_file(rel) or is_agent_file(rel) or ".claude/" in f"/{rel}" or ".claude-plugin/" in f"/{rel}":
+    if (is_skill_file(rel) or is_agent_file(rel) or any(d in f"/{rel}" for d in ("/.claude/", "/.claude-plugin/", "/.agents/"))):
         domains.add("skills-agentes")
     if suffix in SQL_EXT:
         domains.add("sql-plsql")

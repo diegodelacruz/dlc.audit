@@ -1,6 +1,6 @@
 # Multiplataforma (bloque 1: definición)
 
-Estado: **aceptada el 2026-11-26** por el usuario. Implementación pendiente (bloques 2 a 5, al final).
+Estado: **aceptada el 2026-11-26** por el usuario. Bloque 2 implementado; bloques 3 a 5 pendientes (ver al final).
 
 ## Decisiones
 
@@ -57,7 +57,7 @@ skills/                       # fuente única, editable, portable
 ```
 
 - **Una fuente, copias generadas.** Nadie edita las copias; un validador compara hashes y falla si difieren (decisión heredada de la rama de octubre: Windows 11 no maneja bien los enlaces simbólicos).
-- **ChatGPT:** un comando genera el `.zip` para subir, escrito en el directorio temporal y nunca en este repositorio.
+- **ChatGPT:** `python -m dlc_audit skills package` genera un `.zip` con una carpeta por skill, escrito en el directorio temporal y nunca en este repositorio. El formato de subida de ChatGPT no está documentado: es el empaquetado habitual del estándar y consta como **[No verificado]**.
 - **El plugin de Codex y el manifiesto de ChatGPT de la rama de octubre no se portan.** Quedan reemplazados por esta decisión; sirven para distribuir fuera del repositorio, lo que M1 deja fuera de v1.
 
 ### Reglas de portabilidad de `skills/`
@@ -74,7 +74,7 @@ skills/                       # fuente única, editable, portable
 | Bloque | Contenido | Estado |
 |---|---|---|
 | 1 | Esta definición | Aceptada |
-| 2 | Fuente única `skills/`, generador y validador de sincronía, portabilidad de las dos skills, comando del `.zip` de ChatGPT | Pendiente |
+| 2 | Fuente única `skills/`, generador y validador de sincronía (`skills check` y `skills sync`), portabilidad de las dos skills, comando `skills package` | **Hecho** |
 | 3 | Portado desde `claude/gallant-babbage-2srymf`: `docs/cumplimiento/` releído y actualizado, `docs/decisiones/` saneadas con repositorios ficticios, criterios C1 a C12 como referencia | Pendiente |
 | 4 | Catálogo de reglas: marcar `source_verified` con fuente en las reglas ya verificadas; nuevas comprobaciones de `name` ("claude" y "anthropic") y etiquetas XML | Pendiente |
 | 5 | Cierre del PR #1 y borrado de la rama de octubre con etiqueta de archivo; prueba de punta a punta en Claude Code por el usuario | Pendiente |
