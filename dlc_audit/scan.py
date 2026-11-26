@@ -319,8 +319,8 @@ def d_skl_agent_tools(ctx: Ctx, rule: dict) -> list[dict]:
     return out
 
 
-def d_skl_permissions(ctx: Ctx, rule: dict) -> list[dict]:
-    out = []
+def _settings_json(ctx: Ctx):
+    """(ruta, texto, dict) de los ajustes de Claude Code versionados."""
     for rel in ctx.files:
         if not re.search(r"(^|/)\.claude/settings[^/]*\.json$", rel):
             continue
@@ -330,23 +330,107 @@ def d_skl_permissions(ctx: Ctx, rule: dict) -> list[dict]:
         try:
             data = json.loads(text)
         except json.JSONDecodeError:
-            ctx.limitations.append(f"{rel} no es JSON válido; no se evaluó SKL-008.")
+            ctx.limitations.append(f"{rel} no es JSON válido; no se evaluaron SKL-008 ni SKL-016.")
             continue
-        perms = data.get("permissions", {}) if isinstance(data, dict) else {}
-        bad = [v for v in perms.get("allow", []) if v in ("Bash", "Bash(*)", "Bash(*:*)")]
-        if perms.get("defaultMode") == "bypassPermissions":
-            bad.append("defaultMode: bypassPermissions")
-        if not bad:
-            continue
+        yield rel, text, data if isinstance(data, dict) else {}
+
+
+def _line_with(text: str, needle: str) -> tuple[int, str] | None:
+    for i, line in enumerate(text.splitlines(), 1):
+        if needle in line:
+            return i, line
+    return None
+
+
+def d_skl_permissions(ctx: Ctx, rule: dict) -> list[dict]:
+    """Permiso Bash sin restricción (A-17): `Bash` y `Bash(*)` son equivalentes."""
+    out = []
+    for rel, text, data in _settings_json(ctx):
+        bad = [v for v in data.get("permissions", {}).get("allow", []) if v in ("Bash", "Bash(*)")]
         ev = []
         for token in bad[:MAX_EVIDENCE]:
-            needle = token.split(":")[0] if token.startswith("defaultMode") else token
-            for i, line in enumerate(text.splitlines(), 1):
-                if needle in line:
-                    ev.append(file_ev(rel, i, i, line))
-                    break
+            hit = _line_with(text, f'"{token}"')
+            if hit:
+                ev.append(file_ev(rel, hit[0], hit[0], hit[1]))
         if ev:
-            out.append(make_finding(rule, ev, f"Permisos amplios: {', '.join(bad)}.", group="permisos"))
+            out.append(make_finding(rule, ev, f"{rel}: permiso sin restricción ({', '.join(bad)}).", group="permisos"))
+    return out
+
+
+def d_skl_bypass(ctx: Ctx, rule: dict) -> list[dict]:
+    """defaultMode bypassPermissions en ajustes de proyecto o locales (sin efecto, A-20)."""
+    out = []
+    for rel, text, data in _settings_json(ctx):
+        if data.get("permissions", {}).get("defaultMode") == "bypassPermissions":
+            hit = _line_with(text, "bypassPermissions")
+            if hit:
+                out.append(make_finding(rule, [file_ev(rel, hit[0], hit[0], hit[1])],
+                                        f"{rel} declara defaultMode bypassPermissions.", group="permisos"))
+    return out
+
+
+RESERVED_WORDS = ("claude", "anthropic")
+RESERVED_NAMES = ("synced", "anthropic-skills")
+XML_LIKE = re.compile(r"<[^>]*>")
+SPEC_FIELDS = {"name", "description", "license", "compatibility", "metadata", "allowed-tools"}
+
+
+def _skills_only(ctx: Ctx):
+    for rel, text, fm in _skill_like(ctx):
+        if is_skill_file(rel) and fm is not None:
+            yield rel, text, fm
+
+
+def _fm_line(text: str, pattern: str) -> tuple[int, str] | None:
+    """Primera línea del frontmatter que cumple el patrón."""
+    lines = text.splitlines()
+    for i, line in enumerate(lines[1:], 2):
+        if line.strip() == "---":
+            break
+        if re.search(pattern, line):
+            return i, line
+    return None
+
+
+def d_skl_reserved_names(ctx: Ctx, rule: dict) -> list[dict]:
+    out = []
+    for rel, text, fm in _skills_only(ctx):
+        name = fm.get("name", "")
+        problems = []
+        if any(w in name.lower() for w in RESERVED_WORDS):
+            problems.append("contiene una palabra reservada (claude o anthropic)")
+        if name in RESERVED_NAMES:
+            problems.append("es un nombre reservado")
+        if "<" in name or ">" in name:
+            problems.append("contiene < o >")
+        hit = _fm_line(text, r"^name:") if problems else None
+        if hit:
+            out.append(make_finding(rule, [file_ev(rel, hit[0], hit[0], hit[1])],
+                                    f"name '{name}' {'; '.join(problems)}.", group="frontmatter"))
+    return out
+
+
+def d_skl_xml_tags(ctx: Ctx, rule: dict) -> list[dict]:
+    out = []
+    for rel, text, fm in _skills_only(ctx):
+        if XML_LIKE.search(fm.get("name", "")) or XML_LIKE.search(fm.get("description", "")):
+            hit = _fm_line(text, r"<[^>]*>")
+            if hit:
+                out.append(make_finding(rule, [file_ev(rel, hit[0], hit[0], hit[1])],
+                                        f"{rel}: name o description contienen etiquetas tipo XML.", group="frontmatter"))
+    return out
+
+
+def d_skl_unknown_fields(ctx: Ctx, rule: dict) -> list[dict]:
+    out = []
+    for rel, text, fm in _skills_only(ctx):
+        extra = sorted(set(fm) - SPEC_FIELDS)
+        if extra:
+            hit = _fm_line(text, rf"^{re.escape(extra[0])}:")
+            if hit:
+                out.append(make_finding(rule, [file_ev(rel, hit[0], hit[0], hit[1])],
+                                        f"{rel}: campos fuera de la especificación abierta: {', '.join(extra)}.",
+                                        group="frontmatter"))
     return out
 
 
@@ -570,7 +654,8 @@ DETECTORS = {
     "secrets": d_secrets, "readme": d_readme, "changelog": d_changelog, "gitignore": d_gitignore,
     "tests_ci": d_tests_ci, "large_files": d_large_files,
     "skl_frontmatter": d_skl_frontmatter, "skl_name": d_skl_name, "skl_desc_length": d_skl_desc_length,
-    "skl_agent_tools": d_skl_agent_tools, "skl_permissions": d_skl_permissions,
+    "skl_agent_tools": d_skl_agent_tools, "skl_permissions": d_skl_permissions, "skl_bypass": d_skl_bypass,
+    "skl_reserved_names": d_skl_reserved_names, "skl_xml_tags": d_skl_xml_tags, "skl_unknown_fields": d_skl_unknown_fields,
     "skl_length": d_skl_length, "skl_links": d_skl_links,
     "sql_indent": d_sql_indent, "sql_case": d_sql_case, "sql_commas": d_sql_commas,
     "sql_where": d_sql_where, "sql_dynamic": d_sql_dynamic, "sql_when_others": d_sql_when_others,

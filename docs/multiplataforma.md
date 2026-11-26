@@ -1,6 +1,6 @@
 # Multiplataforma (bloque 1: definición)
 
-Estado: **aceptada el 2026-11-26** por el usuario. Bloques 2 y 3 implementados; bloques 4 y 5 pendientes (ver al final).
+Estado: **aceptada el 2026-11-26** por el usuario. Bloques 2, 3 y 4 implementados; bloque 5 pendiente (ver al final).
 
 ## Decisiones
 
@@ -80,7 +80,7 @@ skills/                       # fuente única, editable, portable
 | 1 | Esta definición | Aceptada |
 | 2 | Fuente única `skills/`, generador y validador de sincronía (`skills check` y `skills sync`), portabilidad de las dos skills, comando `skills package` | **Hecho** |
 | 3 | Portado desde `claude/gallant-babbage-2srymf`: `docs/cumplimiento/` releído de forma literal, `docs/decisiones/` saneadas, criterios C1 a C12 como trazabilidad en `criterios.md` | **Hecho** |
-| 4 | Catálogo de reglas: marcar `source_verified` con fuente en las reglas ya verificadas; nuevas comprobaciones de `name` ("claude" y "anthropic") y etiquetas XML | Pendiente |
+| 4 | Catálogo de reglas: reglas enlazadas con `docs/cumplimiento/` (`requirements`), `source_verified` contrastado, reglas nuevas (`SKL-013` a `SKL-016`, `TRN-008`, `TRN-009`) y matriz de cumplimiento en el informe | **Hecho** |
 | 5 | Cierre del PR #1 y borrado de la rama de octubre con etiqueta de archivo; prueba de punta a punta en Claude Code por el usuario | Pendiente |
 
 ## Definition of Done de v1 (plataformas)

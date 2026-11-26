@@ -24,7 +24,7 @@ Detalle y garantías: [docs/protocolo.md](docs/protocolo.md).
 | SQL, PL/SQL y APEX | Formato, SQL dinámico, `when others then null`, idempotencia, auditoría, parametrización |
 | Python, FastAPI, Glue | Dependencias, excepciones, SQL interpolado, rutas S3 fijas, llamadas peligrosas |
 
-El catálogo completo está en `rules/*.json` (38 reglas). Qué queda fuera: `docs/alcance.md`.
+El catálogo completo está en `rules/*.json` (44 reglas). Qué queda fuera: `docs/alcance.md`.
 
 ## Requisitos
 
@@ -104,6 +104,7 @@ Requisito: permiso de **escritura** en el repositorio auditado, solo para crear 
 - **No se modifica nada del repositorio auditado.** Solo se crean ramas `audit/<run_id>` (con archivos bajo `.audit/<run_id>/`) y, al aprobar, se borran las del ciclo. `publish` aborta si el diff toca otra ruta; `cleanup` aborta si una rama contiene otra cosa; nunca hay force push ni merge de ramas de auditoría.
 - **El cierre del integrador se verifica, no se cree:** commits, archivos, deriva (cambios no declarados) y correcciones declaradas que siguen presentes.
 - **Dictamen explícito** y configurable (`approval` en el perfil).
+- **Cumplimiento por requisito oficial:** el informe incluye una matriz con `CUMPLE`, `NO_CUMPLE`, `NO_APLICA` o `NO_VERIFICADO`, calculada desde reglas enlazadas a `docs/cumplimiento/`.
 - **Prompts autosuficientes** con indicación `MISMA` o `NUEVA` conversación (`handoff` en el perfil).
 - **Evidencia verificada:** `validate` comprueba que cada cita exista en el archivo real; una cita inventada se rechaza.
 - **Certeza explícita:** `verified`, `inferential` (**[Inferencial]**), `unverified` (**[No verificado]**).
