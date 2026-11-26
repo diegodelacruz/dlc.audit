@@ -6,7 +6,7 @@
 
 Lo implementado hoy cubre solo Claude Code (skills `audit-repo` y `reaudit`, subagente `dlc-auditor`) sobre un núcleo Python independiente de la plataforma.
 
-Pendiente para cerrar v1: que el usuario ejecute la prueba de punta a punta en Claude Code (`prueba-extremo-a-extremo.md`) y borre a mano las ramas antiguas (`decisiones/20261126-cierre-de-ramas-de-octubre.md`). El contenido útil de la rama `claude/gallant-babbage-2srymf` (PR #1) ya está portado (bloque 3); la rama se conserva hasta el bloque 5.
+Pendiente para cerrar v1: que el usuario ejecute la prueba de punta a punta en Claude Code (`prueba-extremo-a-extremo.md`) y borre a mano las ramas antiguas (`decisiones/20261126-cierre-de-ramas-de-octubre.md`). El contenido útil de la rama `claude/gallant-babbage-2srymf` (PR #1) ya está portado (bloque 3); la rama sigue en el remoto hasta que el usuario la borre a mano y su cabeza se recupera con `refs/pull/1/head`.
 
 ## Qué hace dlc.audit
 
@@ -46,7 +46,7 @@ Actúa como **auditor externo** en un flujo integrador-auditor (ver `protocolo.m
 | Fase | Contenido | Definition of Done |
 |---|---|---|
 | 1 | Núcleo, protocolo de dos rondas (fetch, publish, closure), 4 catálogos, agente y skills | Tests pasan; un ciclo completo sobre un repositorio real termina con dictamen sin errores de `validate --final` |
-| 2 | Estados de hallazgo (riesgo aceptado, falso positivo) con aprobación y mecanismo de supresión | Un hallazgo suprimido no reaparece entre rondas y queda trazado quién lo aprobó |
+| 2 | Estados de hallazgo (riesgo aceptado, falso positivo) con aprobación y mecanismo de supresión; registrar el comando o la lectura que sustenta cada hallazgo (criterio C4); validar el baseline antes de usarlo (criterio C8) | Un hallazgo suprimido no reaparece entre rondas y queda trazado quién lo aprobó |
 | 3 | Salida SARIF, ejecución en CI | Definir cuando se decida |
 
 ## Decisiones tomadas
@@ -69,13 +69,15 @@ Actúa como **auditor externo** en un flujo integrador-auditor (ver `protocolo.m
 | Plataformas v1 | Instalable en Claude Code, Codex, ChatGPT y Antigravity; ejecución probada donde se pueda (hoy solo Claude Code). Ver `multiplataforma.md` |
 | Formato del informe | El actual (JSON y documentos generados); se descarta el formato YAML de la rama de octubre |
 | Modo de uso de las skills | Dentro de un clon de `dlc.audit` |
-| Rama `claude/gallant-babbage-2srymf` (PR #1) | Portado selectivo y luego cierre del PR y borrado de la rama, con etiqueta de archivo |
+| Rama `claude/gallant-babbage-2srymf` (PR #1) | Portado selectivo (PR #5 a #7); PR #1 cerrado sin fusionar; el usuario borra la rama a mano. No se pudo crear la etiqueta de archivo: la cabeza se recupera con `refs/pull/1/head` |
 | Rama `claude/nice-carson-yc8xgi` | Descartada por el usuario (contenía informes de auditoría de otro repositorio; último commit `acee291`) |
 | Método de merge a `main` | Merge commit (`--no-ff`) |
 | Secuencia | Fusionar el núcleo ahora con v1 marcado incompleto; la multiplataforma se construye después |
 
 ## Pendientes de definición [No verificado]
 
+- Trabajo futuro del catálogo, sin fase asignada: contrastar con su fuente las 13 reglas restantes (criterio C5) y detección determinista de contradicciones y datos personales (criterios C7 y C9).
+- Entregar el detalle de los hallazgos dentro del prompt del integrador cuando no se pueda publicar la rama de auditoría: alternativa descrita en `protocolo.md`, no implementada.
 - Permiso de escritura en los repositorios auditados (publicar y borrar ramas `audit/*`).
 - Si el integrador debe eliminar su rama de corrección tras el merge (hoy: solo si la creó exclusivamente para la auditoría).
 - Cómo conservar, si se necesita, la trazabilidad de una auditoría sin guardar informes en este repositorio (hoy: ninguna; solo perdura lo que quede en el repositorio auditado).

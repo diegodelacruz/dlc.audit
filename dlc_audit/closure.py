@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from .gitops import GitError, _run
+from .gitops import _run
 
 STATUSES = ("fixed", "not_applicable", "not_fixed", "partial")
 NEEDS_NOTE = ("not_applicable", "not_fixed", "partial")

@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from dlc_audit.common import ROOT, finding_id, load_catalog, load_json, load_profile
+from dlc_audit.common import finding_id, load_catalog, load_profile
 from dlc_audit.render import render_prompts, render_report
 from dlc_audit.scan import mask_sql, parse_frontmatter, run_scan
 from dlc_audit.validate import validate_run

@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 
 from dlc_audit.closure import check_closure, cross_check
-from dlc_audit.common import load_json, save_json, load_profile, sanitize_url, verdict
+from dlc_audit.common import save_json, load_profile, sanitize_url, verdict
 from dlc_audit.gitops import GitError, fetch, publish, safe_source
 from dlc_audit.render import render_integrator_prompt, render_prompts, render_report
 from dlc_audit.scan import run_scan

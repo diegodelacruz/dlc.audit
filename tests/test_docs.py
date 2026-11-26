@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import re
 import unittest
-from pathlib import Path
 
 from dlc_audit.common import ROOT
 
@@ -83,6 +82,7 @@ class DecisionsTests(unittest.TestCase):
         for p in self.files():
             text = p.read_text(encoding="utf-8")
             if re.search(r"(?m)^Estado: Reemplazada", text):
+                self.assertRegex(text, r"(?m)^Estado: Reemplazada por `[^`]+`", f"{p.name}: el Estado no nombra el reemplazo")
                 self.assertRegex(text, r"## Vigencia en dlc\.audit", p.name)
                 self.assertRegex(text, r"`[^`]+\.md`|`docs/[^`]+`|`profiles/[^`]+`|`python -m dlc_audit[^`]*`", p.name)
 
