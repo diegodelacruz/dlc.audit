@@ -13,6 +13,7 @@ Una decisión de diseño por archivo, con nombre `AAAAMMDD-slug.md`, un `Estado:
 | [20261019-reglas-veredicto-validador.md](20261019-reglas-veredicto-validador.md) | Reglas de veredicto implementadas en el validador | Reemplazada | octubre (rama anterior) |
 | [20261019-respuestas-preguntas-abiertas.md](20261019-respuestas-preguntas-abiertas.md) | Respuestas de Diego a las preguntas abiertas | Vigente con modificaciones | octubre (rama anterior) |
 | [20261020-adaptador-codex-plugin.md](20261020-adaptador-codex-plugin.md) | Adaptador de Codex como plugin | Reemplazada | octubre (rama anterior) |
+| [20261126-cierre-de-ramas-de-octubre.md](20261126-cierre-de-ramas-de-octubre.md) | Cierre del PR de octubre y destino de las ramas antiguas | aceptada | 2026-11-26 |
 | [20261126-multiplataforma-alcance-y-modo.md](20261126-multiplataforma-alcance-y-modo.md) | Multiplataforma: alcance y modo de uso | aceptada | 2026-11-26 |
 | [20261126-protocolo-auditor-integrador.md](20261126-protocolo-auditor-integrador.md) | Protocolo auditor-integrador | aceptada | 2026-11-26 |
 | [20261126-sin-informes-en-este-repositorio.md](20261126-sin-informes-en-este-repositorio.md) | Este repositorio no guarda informes de auditoría | aceptada | 2026-11-26 |

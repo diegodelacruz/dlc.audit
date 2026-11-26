@@ -6,7 +6,7 @@
 
 Lo implementado hoy cubre solo Claude Code (skills `audit-repo` y `reaudit`, subagente `dlc-auditor`) sobre un núcleo Python independiente de la plataforma.
 
-Pendiente para cerrar v1: bloque 5 de `multiplataforma.md` (cierre de ramas y prueba de punta a punta en Claude Code). El contenido útil de la rama `claude/gallant-babbage-2srymf` (PR #1) ya está portado (bloque 3); la rama se conserva hasta el bloque 5.
+Pendiente para cerrar v1: que el usuario ejecute la prueba de punta a punta en Claude Code (`prueba-extremo-a-extremo.md`) y borre a mano las ramas antiguas (`decisiones/20261126-cierre-de-ramas-de-octubre.md`). El contenido útil de la rama `claude/gallant-babbage-2srymf` (PR #1) ya está portado (bloque 3); la rama se conserva hasta el bloque 5.
 
 ## Qué hace dlc.audit
 

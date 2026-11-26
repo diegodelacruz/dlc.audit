@@ -4,6 +4,21 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-26
+
+### Añadido
+
+- Comando `demo`: genera un repositorio ficticio con 21 defectos conocidos y sin secretos (para que GitHub no bloquee su publicación) con el que probar el ciclo completo.
+- `docs/prueba-extremo-a-extremo.md`: guion de la prueba de nivel L2 en Claude Code, con 14 comprobaciones de aceptación, fallos esperables, qué reportar y limpieza.
+- `docs/decisiones/20261126-cierre-de-ramas-de-octubre.md`: cierre del PR #1 y destino de las ramas antiguas.
+- `tests/test_demo.py`: el demo produce exactamente las reglas esperadas, no contiene secretos y es corregible por completo hasta `APROBADO`.
+
+### Cambiado
+
+- `purge <repo>` también elimina la carpeta del demo en el directorio de trabajo.
+- El PR #1 (rama de octubre) se cierra sin fusionar tras el portado selectivo.
+
+
 ## [0.7.0] - 2026-11-26
 
 ### Añadido
