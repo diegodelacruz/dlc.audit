@@ -1,0 +1,113 @@
+{
+  "catalog": "skills-agentes",
+  "rules": [
+    {
+      "id": "SKL-001", "version": "1.0.0", "domain": "skills-agentes", "applies_to": ["skills-agentes"],
+      "title": "Frontmatter incompleto en skill o subagente",
+      "description": "El archivo no tiene frontmatter YAML o le faltan los campos name o description. Sin ellos la skill o el agente no se puede descubrir ni invocar correctamente.",
+      "severity": "high", "effort": "S", "method": "deterministic", "detector": "skl_frontmatter",
+      "remediation": "Añadir bloque de frontmatter delimitado por --- con name y description.",
+      "acceptance": "El archivo comienza con frontmatter válido que incluye name y description no vacíos.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "Especificacion de Agent Skills / documentacion de Claude Code", "source_verified": false
+    },
+    {
+      "id": "SKL-002", "version": "1.0.0", "domain": "skills-agentes", "applies_to": ["skills-agentes"],
+      "title": "Nombre de skill inválido o distinto de su carpeta",
+      "description": "El nombre debe usar minúsculas, números y guiones (máximo 64 caracteres) y coincidir con el nombre de su carpeta.",
+      "severity": "medium", "effort": "S", "method": "deterministic", "detector": "skl_name",
+      "remediation": "Renombrar la skill o su carpeta para que coincidan y cumplan el formato kebab-case.",
+      "acceptance": "name cumple el formato y es igual al nombre de la carpeta que contiene SKILL.md.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "Especificacion de Agent Skills", "source_verified": false
+    },
+    {
+      "id": "SKL-003", "version": "1.0.0", "domain": "skills-agentes", "applies_to": ["skills-agentes"],
+      "title": "Descripción sin condiciones de activación",
+      "description": "La descripción dice qué hace la skill pero no cuándo usarla (disparadores, frases del usuario, tipos de archivo). El modelo decide la invocación leyendo solo la descripción.",
+      "severity": "medium", "effort": "S", "method": "judgment",
+      "remediation": "Reescribir la descripción con qué hace, cuándo usarla y cuándo no.",
+      "acceptance": "La descripción incluye disparadores concretos y exclusiones.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "Guia de creacion de skills", "source_verified": false
+    },
+    {
+      "id": "SKL-004", "version": "1.0.0", "domain": "skills-agentes", "applies_to": ["skills-agentes"],
+      "title": "Descripción demasiado larga",
+      "description": "La descripción supera 1024 caracteres. Se carga siempre en el contexto y puede ser truncada o rechazada.",
+      "severity": "low", "effort": "S", "method": "deterministic", "detector": "skl_desc_length",
+      "remediation": "Acortar la descripción a lo esencial y mover el detalle al cuerpo del SKILL.md.",
+      "acceptance": "La descripción tiene 1024 caracteres o menos.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "Especificacion de Agent Skills", "source_verified": false
+    },
+    {
+      "id": "SKL-005", "version": "1.0.0", "domain": "skills-agentes", "applies_to": ["skills-agentes"],
+      "title": "Skills con descripciones solapadas",
+      "description": "Dos o más skills o agentes cubren disparadores equivalentes; la selección del modelo se vuelve ambigua.",
+      "severity": "medium", "effort": "M", "method": "judgment",
+      "remediation": "Fusionar las skills, o delimitar con claridad el alcance de cada una en su descripción.",
+      "acceptance": "Cada disparador corresponde a una única skill o la descripción explicita la frontera entre ellas.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "Guia de creacion de skills", "source_verified": false
+    },
+    {
+      "id": "SKL-006", "version": "1.0.0", "domain": "skills-agentes", "applies_to": ["skills-agentes"],
+      "title": "Subagente sin lista de herramientas",
+      "description": "Si el subagente no declara tools, hereda todas las herramientas de la sesión, incluidas las de escritura y las de servidores MCP.",
+      "severity": "high", "effort": "S", "method": "deterministic", "detector": "skl_agent_tools",
+      "remediation": "Declarar tools con el mínimo necesario para la tarea del agente.",
+      "acceptance": "El frontmatter del agente incluye tools con solo las herramientas requeridas.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "Documentacion de Claude Code (subagentes)", "source_verified": false
+    },
+    {
+      "id": "SKL-007", "version": "1.0.0", "domain": "skills-agentes", "applies_to": ["skills-agentes"],
+      "title": "Hook que ejecuta comandos de forma insegura",
+      "description": "Un hook ejecuta comandos de shell con datos de entrada sin sanear, con efectos destructivos o con acceso a la red sin control.",
+      "severity": "high", "effort": "M", "method": "judgment",
+      "remediation": "Entrecomillar y validar las entradas, limitar el alcance del comando y evitar efectos destructivos o salida de datos.",
+      "acceptance": "El hook valida sus entradas y su efecto está acotado y documentado.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "Documentacion de Claude Code (hooks)", "source_verified": false
+    },
+    {
+      "id": "SKL-008", "version": "1.0.0", "domain": "skills-agentes", "applies_to": ["skills-agentes"],
+      "title": "Permisos excesivamente amplios",
+      "description": "La configuración permite todos los comandos de shell sin restricción o desactiva las confirmaciones de permisos (bypassPermissions).",
+      "severity": "high", "effort": "S", "method": "deterministic", "detector": "skl_permissions",
+      "remediation": "Reemplazar los permisos genéricos por reglas específicas (comando y argumentos) y evitar bypassPermissions en configuración versionada.",
+      "acceptance": "No hay permisos Bash sin restricción ni bypassPermissions en archivos de configuración versionados.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "Documentacion de Claude Code (permisos)", "source_verified": false
+    },
+    {
+      "id": "SKL-009", "version": "1.0.0", "domain": "skills-agentes", "applies_to": ["skills-agentes"],
+      "title": "SKILL.md demasiado extenso",
+      "description": "El cuerpo supera 500 líneas. Todo se carga en contexto al activarse; el material de apoyo debería ir en archivos referenciados.",
+      "severity": "low", "effort": "M", "method": "deterministic", "detector": "skl_length",
+      "remediation": "Mover detalle a archivos de referencia y enlazarlos desde SKILL.md (divulgación progresiva).",
+      "acceptance": "SKILL.md tiene 500 líneas o menos y el detalle está en archivos referenciados.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "Guia de creacion de skills", "source_verified": false
+    },
+    {
+      "id": "SKL-010", "version": "1.0.0", "domain": "skills-agentes", "applies_to": ["skills-agentes"],
+      "title": "Referencia a archivo inexistente",
+      "description": "Un enlace relativo apunta a un archivo que no existe; la skill depende de material que el agente no podrá leer.",
+      "severity": "medium", "effort": "S", "method": "deterministic", "detector": "skl_links",
+      "remediation": "Crear el archivo referenciado o corregir/eliminar el enlace.",
+      "acceptance": "Todos los enlaces relativos del archivo resuelven a archivos existentes.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "convencion-interna", "source_verified": true
+    },
+    {
+      "id": "SKL-011", "version": "1.0.0", "domain": "skills-agentes", "applies_to": ["skills-agentes"],
+      "title": "Skill sin criterios de finalización ni verificación",
+      "description": "Las instrucciones describen pasos pero no cómo comprobar que la tarea terminó bien, ni qué reportar al usuario.",
+      "severity": "medium", "effort": "S", "method": "judgment",
+      "remediation": "Añadir criterios de terminado, pasos de verificación y formato del reporte final.",
+      "acceptance": "La skill incluye criterios de finalización verificables.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "convencion-interna", "source_verified": true
+    },
+    {
+      "id": "SKL-012", "version": "1.0.0", "domain": "skills-agentes", "applies_to": ["skills-agentes"],
+      "title": "Exposición a inyección de instrucciones",
+      "description": "La skill o el agente procesa contenido no confiable (páginas web, correos, archivos de terceros, resultados de herramientas) sin indicar que debe tratarse como dato y no como instrucción, y con herramientas capaces de actuar.",
+      "severity": "high", "effort": "M", "method": "judgment",
+      "remediation": "Declarar que el contenido externo es dato, restringir las herramientas, exigir confirmación para acciones externas o destructivas.",
+      "acceptance": "Las instrucciones tratan el contenido externo como dato y las acciones sensibles requieren confirmación.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "OWASP LLM Top 10 (prompt injection)", "source_verified": false
+    }
+  ]
+}

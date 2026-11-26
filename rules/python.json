@@ -1,0 +1,68 @@
+{
+  "catalog": "python",
+  "rules": [
+    {
+      "id": "PYT-001", "version": "1.0.0", "domain": "python", "applies_to": ["python"],
+      "title": "Dependencias sin versión fija",
+      "description": "requirements sin versiones exactas hace que cada instalación pueda traer versiones distintas y rompa la reproducibilidad.",
+      "severity": "medium", "effort": "S", "method": "deterministic", "detector": "py_requirements",
+      "remediation": "Fijar versiones con == (o usar un archivo de bloqueo) y actualizarlas de forma controlada.",
+      "acceptance": "Todas las dependencias directas tienen versión fija.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "Buenas practicas de empaquetado Python", "source_verified": false
+    },
+    {
+      "id": "PYT-002", "version": "1.0.0", "domain": "python", "applies_to": ["python"],
+      "title": "Excepción genérica o silenciada",
+      "description": "except sin tipo, o un manejador cuyo cuerpo es solo pass, oculta errores reales y complica el diagnóstico.",
+      "severity": "medium", "effort": "S", "method": "deterministic", "detector": "py_except",
+      "remediation": "Capturar excepciones específicas, registrar el error y relanzar cuando no se pueda recuperar.",
+      "acceptance": "No quedan manejadores vacíos ni except sin tipo.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "PEP 8 / buenas practicas", "source_verified": false
+    },
+    {
+      "id": "PYT-003", "version": "1.0.0", "domain": "python", "applies_to": ["python"],
+      "title": "FastAPI: endpoints sin autenticación o autorización",
+      "description": "Rutas que exponen datos o acciones sin dependencia de autenticación, o sin control de roles.",
+      "severity": "high", "effort": "M", "method": "judgment",
+      "remediation": "Aplicar dependencias de autenticación y autorización a nivel de router o de endpoint y registrar los accesos.",
+      "acceptance": "Todo endpoint no público exige autenticación y valida permisos.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "Documentacion de FastAPI (seguridad)", "source_verified": false
+    },
+    {
+      "id": "PYT-004", "version": "1.0.0", "domain": "python", "applies_to": ["python"],
+      "title": "SQL construido con interpolación de texto",
+      "description": "Una consulta se arma con f-string, formato o concatenación y se pasa a execute; permite inyección SQL.",
+      "severity": "high", "effort": "M", "method": "deterministic", "detector": "py_sql_interpolation",
+      "remediation": "Usar consultas parametrizadas (variables de enlace) del conector.",
+      "acceptance": "Las consultas se ejecutan con parámetros y no con texto interpolado.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "OWASP (SQL injection)", "source_verified": false
+    },
+    {
+      "id": "PYT-005", "version": "1.0.0", "domain": "python", "applies_to": ["python"],
+      "title": "Rutas S3 o nombres de bucket fijos en el código",
+      "description": "Rutas s3:// escritas en el código atan el script a un ambiente; cambiar de ambiente requiere editar código.",
+      "severity": "medium", "effort": "S", "method": "deterministic", "detector": "py_s3_hardcode",
+      "remediation": "Recibir rutas y buckets como parámetros del job (argumentos o configuración).",
+      "acceptance": "Ninguna ruta s3:// está escrita en el código; se reciben por parámetro.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "convencion-interna", "source_verified": true
+    },
+    {
+      "id": "PYT-006", "version": "1.0.0", "domain": "python", "applies_to": ["python"],
+      "title": "Proceso ETL o job Glue sin idempotencia",
+      "description": "El job, al reejecutarse, duplica o sobreescribe datos de forma no controlada por falta de claves, particiones por ejecución o control de estado.",
+      "severity": "medium", "effort": "M", "method": "judgment",
+      "remediation": "Escribir por partición determinista o con merge, y registrar el estado de cada ejecución para poder reintentar.",
+      "acceptance": "Reejecutar el job con la misma entrada produce el mismo resultado sin duplicados.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "convencion-interna", "source_verified": true
+    },
+    {
+      "id": "PYT-007", "version": "1.0.0", "domain": "python", "applies_to": ["python"],
+      "title": "Ejecución dinámica o shell inseguro",
+      "description": "Uso de eval, exec, os.system o subprocess con shell=True; permite ejecución arbitraria si algún dato es externo.",
+      "severity": "high", "effort": "M", "method": "deterministic", "detector": "py_dangerous_calls",
+      "remediation": "Reemplazar por alternativas seguras (ast.literal_eval, subprocess con lista de argumentos y shell=False) y validar las entradas.",
+      "acceptance": "No hay llamadas a eval, exec, os.system ni subprocess con shell=True con datos no controlados.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "Bandit / buenas practicas de seguridad", "source_verified": false
+    }
+  ]
+}

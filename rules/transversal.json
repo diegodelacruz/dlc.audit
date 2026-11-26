@@ -1,0 +1,68 @@
+{
+  "catalog": "transversal",
+  "rules": [
+    {
+      "id": "TRN-001", "version": "1.0.0", "domain": "transversal", "applies_to": ["*"],
+      "title": "Secreto o credencial en el repositorio",
+      "description": "Se detectó un valor con forma de credencial (clave de acceso, token, contraseña, clave privada) escrito en un archivo versionado. Cualquiera con acceso de lectura al repositorio puede usarlo.",
+      "severity": "critical", "effort": "M", "method": "deterministic", "detector": "secrets",
+      "remediation": "Revocar y rotar la credencial de inmediato. Retirarla del código y leerla desde variables de entorno o un gestor de secretos. Valorar reescribir el historial si el repositorio es compartido.",
+      "acceptance": "El valor ya no aparece en el árbol de trabajo, la credencial original está revocada y existe un mecanismo documentado para proveerla en tiempo de ejecución.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "Buenas practicas generales de gestion de secretos (OWASP)", "source_verified": false
+    },
+    {
+      "id": "TRN-002", "version": "1.0.0", "domain": "transversal", "applies_to": ["*"],
+      "title": "README ausente o insuficiente",
+      "description": "El repositorio no tiene README, o este es demasiado breve para explicar propósito, uso y requisitos.",
+      "severity": "medium", "effort": "S", "method": "deterministic", "detector": "readme",
+      "remediation": "Crear o ampliar README.md con propósito, requisitos, instalación, uso y estructura del repositorio.",
+      "acceptance": "README.md existe y describe propósito, requisitos, forma de ejecución y estructura.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "convencion-interna", "source_verified": true
+    },
+    {
+      "id": "TRN-003", "version": "1.0.0", "domain": "transversal", "applies_to": ["*"],
+      "title": "Sin CHANGELOG",
+      "description": "No hay registro de cambios, lo que dificulta la trazabilidad de versiones.",
+      "severity": "low", "effort": "S", "method": "deterministic", "detector": "changelog",
+      "remediation": "Crear CHANGELOG.md con formato Keep a Changelog y registrar los cambios desde ahora.",
+      "acceptance": "CHANGELOG.md existe con una sección Unreleased y las versiones relevantes.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "convencion-interna", "source_verified": true
+    },
+    {
+      "id": "TRN-004", "version": "1.0.0", "domain": "transversal", "applies_to": ["*"],
+      "title": "Sin .gitignore",
+      "description": "Sin .gitignore es fácil versionar por accidente artefactos, entornos virtuales o archivos con credenciales.",
+      "severity": "low", "effort": "S", "method": "deterministic", "detector": "gitignore",
+      "remediation": "Añadir .gitignore acorde al stack (entornos virtuales, cachés, .env, salidas de build).",
+      "acceptance": ".gitignore existe y cubre entornos virtuales, cachés y archivos de entorno.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "convencion-interna", "source_verified": true
+    },
+    {
+      "id": "TRN-005", "version": "1.0.0", "domain": "transversal", "applies_to": ["*"],
+      "title": "Valores de entorno o negocio fijos en el código",
+      "description": "Hosts, rutas, identificadores de ambiente, umbrales o reglas de negocio escritos directamente en el código en lugar de una configuración parametrizada con vigencia.",
+      "severity": "medium", "effort": "M", "method": "judgment",
+      "remediation": "Mover los valores a configuración (variables de entorno o tabla de parámetros con vigencia y versionado) y leerlos desde ahí.",
+      "acceptance": "Los valores señalados se obtienen de configuración y cambiarlos no requiere modificar código.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "convencion-interna", "source_verified": true
+    },
+    {
+      "id": "TRN-006", "version": "1.0.0", "domain": "transversal", "applies_to": ["python", "sql-plsql"],
+      "title": "Sin pruebas ni integración continua",
+      "description": "El repositorio tiene código pero no se detectaron pruebas automatizadas ni un pipeline de CI.",
+      "severity": "medium", "effort": "L", "method": "deterministic", "detector": "tests_ci",
+      "remediation": "Añadir pruebas para la lógica crítica y un pipeline que las ejecute en cada cambio.",
+      "acceptance": "Existe al menos un conjunto de pruebas ejecutable con un comando documentado y un pipeline que lo corre.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "convencion-interna", "source_verified": true
+    },
+    {
+      "id": "TRN-007", "version": "1.0.0", "domain": "transversal", "applies_to": ["*"],
+      "title": "Archivo grande versionado",
+      "description": "Archivos de más de 1 MB en el repositorio (binarios, volcados, datos) inflan el historial y pueden contener datos sensibles.",
+      "severity": "low", "effort": "S", "method": "deterministic", "detector": "large_files",
+      "remediation": "Sacar el archivo del repositorio (almacenamiento externo o Git LFS) y revisar que no contenga datos sensibles.",
+      "acceptance": "El archivo ya no está versionado en el árbol de trabajo o está gestionado por LFS.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "convencion-interna", "source_verified": true
+    }
+  ]
+}

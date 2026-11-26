@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.idea/
+.vscode/
+
+# Resultados de auditoría: pueden contener información sensible del objetivo.
+work/
+audits/*
+!audits/.gitkeep

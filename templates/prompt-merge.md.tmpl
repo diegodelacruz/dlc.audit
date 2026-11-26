@@ -1,0 +1,50 @@
+# Prompt para el INTEGRADOR: integrar a la rama principal (auditoría aprobada)
+
+**CONVERSACIÓN: $conv**
+
+$why
+
+> Pégalo en el agente integrador, con acceso a `$repo_url`. Es autosuficiente.
+
+## Situación
+
+Un auditor externo e independiente (dlc.audit) aprobó la rama `$branch` en la revisión `$approved_sha` (dictamen: **$verdict**, ciclo $final_run_id, $n_rounds ronda(s)). Tu tarea es integrarla en `$base` y dejar el entorno limpio. El auditor solo aprueba lo que auditó: si algo no coincide con lo descrito aquí, **detente y repórtalo**.
+
+## Pasos
+
+1. Sincroniza y comprueba que lo que vas a integrar es exactamente lo auditado:
+
+   ```
+   git fetch origin --prune
+   git rev-parse origin/$branch
+   ```
+
+   El resultado debe ser `$approved_sha`. Si es otro, hay commits posteriores a la auditoría: **detente** y responde que se requiere nueva auditoría.
+2. Comprueba que la rama principal no avanzó:
+
+   ```
+   git rev-list --count origin/$branch..origin/$base
+   ```
+
+   Debe ser `0`. Si es mayor, el resultado del merge no fue auditado: **detente** y responde que hay que integrar `$base` en la rama y re-auditar.
+3. Integra con la estrategia `$strategy`:
+
+   ```
+$merge_commands
+   ```
+
+4. Empuja `$base` sin force. Si la rama está protegida y el push es rechazado, no lo eludas: abre un pull request de `$branch` hacia `$base`, y repórtalo.
+5. Limpieza local de la auditoría (solo restos del auditor):
+
+   ```
+$cleanup_commands
+   ```
+
+6. $correction_branch_step
+7. Responde con un resumen breve: estado del merge (o URL del pull request), commit resultante en `$base`, ramas locales y remotas eliminadas, y cualquier paso que no pudiste ejecutar y por qué.
+
+## Reglas
+
+- No modifiques archivos durante la integración (sin resolver conflictos ni editar). Si hay conflictos, detente y repórtalo.
+- No fuerces push ni reescribas historia.
+- No toques ramas que no se mencionan aquí.
