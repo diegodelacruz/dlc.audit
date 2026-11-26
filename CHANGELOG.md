@@ -4,6 +4,10 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Unreleased]
 
+### Añadido
+
+- Perfil `default` 1.3.0: clave `accepted_exceptions` para declarar excepciones aceptadas por el usuario (regla, objetivo, globs, motivo, aprobador y vigencia). `scan` no informa esos hallazgos en rondas futuras y los declara en `limitations` y `coverage.accepted_exceptions`. Primera excepción: `EXC-001` (archivos zip de más de 1 MB, regla `TRN-007`, acotada por rutas de fixtures y upstreams vendorizados).
+
 ## [0.8.2] - 2026-11-26
 
 Cierra las observaciones de la re-auditoría de integridad del commit `6f542dd` (veredicto `ÍNTEGRO CON OBSERVACIONES`; 12 correcciones resueltas, sin regresiones).

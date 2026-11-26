@@ -1,6 +1,6 @@
 {
   "name": "default",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Perfil base: todos los catálogos de Fase 1 con severidades por defecto.",
   "catalogs": [
     "transversal",
@@ -19,6 +19,21 @@
     "dist/**",
     "build/**",
     ".audit/**"
+  ],
+  "accepted_exceptions": [
+    {
+      "id": "EXC-001",
+      "repo": "*",
+      "rule_id": "TRN-007",
+      "paths": [
+        "tests/fixtures/apex-exports/*.zip",
+        "vendor/upstreams/*.zip"
+      ],
+      "reason": "Exportaciones APEX usadas como fixtures de prueba y upstream vendorizado; su tamaño es intencional.",
+      "approved_by": "Diego",
+      "valid_from": "2026-11-26",
+      "valid_to": null
+    }
   ],
   "prompt_conventions": {
     "*": [

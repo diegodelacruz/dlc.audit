@@ -666,6 +666,44 @@ DETECTORS = {
 }
 
 
+# ---------------------------------------------------------------- excepciones aceptadas
+
+def active_exceptions(profile: dict, target_name: str, today: str) -> list[dict]:
+    """Excepciones del perfil vigentes hoy y aplicables al objetivo (por nombre o '*')."""
+    out = []
+    for exc in profile.get("accepted_exceptions", []):
+        if exc.get("repo") not in (target_name, "*"):
+            continue
+        if exc.get("valid_from", "0000-01-01") > today:
+            continue
+        if exc.get("valid_to") and exc["valid_to"] < today:
+            continue
+        out.append(exc)
+    return out
+
+
+def apply_exceptions(findings: list[dict], exceptions: list[dict]) -> tuple[list[dict], list[dict]]:
+    """Separa (hallazgos vigentes, excepciones usadas). Un hallazgo queda cubierto solo si
+    toda su evidencia coincide con los globs de una excepción de su misma regla."""
+    kept, used = [], {}
+    for f in findings:
+        covering = None
+        for exc in exceptions:
+            if exc["rule_id"] != f["rule_id"]:
+                continue
+            if all(any(fnmatch.fnmatch(ev["path"], g) for g in exc["paths"]) for ev in f["evidence"]):
+                covering = exc
+                break
+        if covering is None:
+            kept.append(f)
+        else:
+            entry = used.setdefault(covering["id"], {"id": covering["id"], "rule_id": covering["rule_id"],
+                                                     "reason": covering["reason"],
+                                                     "approved_by": covering["approved_by"], "paths": []})
+            entry["paths"].extend(ev["path"] for ev in f["evidence"])
+    return kept, list(used.values())
+
+
 # ---------------------------------------------------------------- orquestación
 
 def run_scan(target: Path, profile_name: str = "default", root: Path = ROOT,
@@ -699,11 +737,18 @@ def run_scan(target: Path, profile_name: str = "default", root: Path = ROOT,
             findings.extend(DETECTORS[rule["detector"]](ctx, rule))
         rules_status.append(entry)
 
+    exceptions = active_exceptions(profile, target.name, started[:10])
+    findings, exceptions_used = apply_exceptions(findings, exceptions)
+
     for f in findings:
         f["id"] = finding_id(f["rule_id"], f["evidence"])
 
     info = git_info(target)
     limitations = sorted(set(ctx.limitations))
+    for exc in exceptions_used:
+        limitations.append(
+            f"Excepción aceptada {exc['id']} ({exc['rule_id']}, aprobada por {exc['approved_by']}): "
+            f"{len(exc['paths'])} hallazgo(s) no se informan. Motivo: {exc['reason']}")
     if info["dirty"]:
         limitations.append("El repositorio objetivo tiene cambios sin commitear; la auditoría no es reproducible por revisión.")
     if info["revision"] == "no-git":
@@ -727,7 +772,7 @@ def run_scan(target: Path, profile_name: str = "default", root: Path = ROOT,
                    "ref": ref or current_ref(target)},
         "started_at": started, "finished_at": None,
         "coverage": {"files_total": len(files), "files_by_domain": dict(sorted(by_domain.items())),
-                     "excluded": excluded},
+                     "excluded": excluded, "accepted_exceptions": exceptions_used},
         "rules": rules_status,
         "executive_summary": "",
         "limitations": limitations,

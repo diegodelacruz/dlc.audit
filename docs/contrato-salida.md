@@ -148,4 +148,5 @@ Selecciona catálogos, deshabilita reglas, sobrescribe severidades, define exclu
 |---|---|
 | `approval` | `block_on`: severidades que impiden la aprobación; `unverified_blocks`: si los no verificados bloquean (por defecto no) |
 | `merge` | `strategy` del prompt de merge: `no-ff` (por defecto), `squash` o `ff-only` |
+| `accepted_exceptions` | Lista de excepciones aceptadas por el usuario. Campos: `id`, `repo` (nombre del objetivo o `*`), `rule_id`, `paths` (globs), `reason`, `approved_by`, `valid_from`, `valid_to` (opcional). `scan` no informa un hallazgo si toda su evidencia coincide con los globs de una excepción vigente de su misma regla. Cada excepción usada se declara en `limitations` y en `coverage.accepted_exceptions`; nunca se omite en silencio. Solo aplica a hallazgos de `scan`; el agente que evalúa reglas de juicio respeta las excepciones listadas en `coverage.accepted_exceptions` |
 | `handoff` | Por rol (`integrator`, `auditor`): `conversation` (`MISMA` o `NUEVA`) y `reason`. Se imprimen en la cabecera de cada prompt |

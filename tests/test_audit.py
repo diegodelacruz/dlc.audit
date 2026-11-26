@@ -197,3 +197,21 @@ class AuditTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AcceptedExceptionsTests(unittest.TestCase):
+    def test_covered_findings_are_dropped_and_declared(self):
+        from dlc_audit.scan import apply_exceptions, active_exceptions
+        exc = {"id": "EXC-T", "repo": "objetivo", "rule_id": "TRN-007", "paths": ["fx/*.zip"],
+               "reason": "fixture", "approved_by": "t", "valid_from": "2026-01-01", "valid_to": None}
+        mk = lambda rule, path: {"rule_id": rule, "evidence": [{"path": path}]}
+        findings = [mk("TRN-007", "fx/a.zip"), mk("TRN-007", "otro/b.zip"), mk("TRN-001", "fx/c.zip")]
+        kept, used = apply_exceptions(findings, [exc])
+        self.assertEqual([f["evidence"][0]["path"] for f in kept], ["otro/b.zip", "fx/c.zip"])
+        self.assertEqual(used[0]["paths"], ["fx/a.zip"])
+        profile = {"accepted_exceptions": [exc]}
+        self.assertEqual(len(active_exceptions(profile, "objetivo", "2026-11-26")), 1)
+        self.assertEqual(active_exceptions(profile, "otro", "2026-11-26"), [])
+        self.assertEqual(active_exceptions(profile, "objetivo", "2025-12-31"), [])
+        exc["valid_to"] = "2026-06-30"
+        self.assertEqual(active_exceptions(profile, "objetivo", "2026-11-26"), [])
