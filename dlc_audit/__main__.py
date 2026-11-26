@@ -148,11 +148,11 @@ def cmd_merge_prompt(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="dlc_audit", description="Auditor independiente de repositorios (solo lectura).")
+    parser = argparse.ArgumentParser(prog="dlc_audit", description="Auditor externo de repositorios: no modifica el código auditado.")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     p = sub.add_parser("scan", help="Inventario y reglas deterministas.")
-    p.add_argument("target", help="Ruta del repositorio objetivo (solo lectura).")
+    p.add_argument("target", help="Ruta del clon del repositorio objetivo (no se modifica).")
     p.add_argument("--out", help="Ruta de hallazgos.json (por defecto audits/<repo>/<run_id>/).")
     p.add_argument("--profile", default="default")
     p.add_argument("--ref", help="Nombre de la rama auditada (por defecto, la rama actual del clon).")
