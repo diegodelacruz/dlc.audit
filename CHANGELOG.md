@@ -4,6 +4,10 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Unreleased]
 
+### Pendiente
+
+- Multiplataforma obligatoria en v1 (Codex con prioridad, ChatGPT, Antigravity): adaptadores, verificación de sincronía y requisitos oficiales con URL y fecha. Ver `docs/alcance.md`.
+
 ## [0.3.1] - 2026-11-26
 
 ### Corregido

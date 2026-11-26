@@ -1,5 +1,17 @@
 # Alcance y fases
 
+## Estado de v1
+
+**v1 NO está completa.** Requisito vigente (decisión del usuario, 2026-10-19, ratificada el 2026-11-26): las plataformas **Claude, Codex (prioridad), ChatGPT y Antigravity son obligatorias en v1**. Lo implementado hoy cubre solo Claude Code (skills `audit-repo` y `reaudit`, subagente `dlc-auditor`) sobre un núcleo Python independiente de la plataforma.
+
+Pendiente para cerrar v1:
+
+1. Adaptadores para Codex, ChatGPT y Antigravity de las skills y del subagente, con verificación de sincronía con el origen.
+2. Requisitos oficiales de OpenAI, Anthropic y Google con URL y fecha (resuelve las reglas con `source_verified: false`).
+3. Reconciliar tres diferencias de diseño con el trabajo previo de la rama `claude/gallant-babbage-2srymf` (PR #1): dónde queda el informe final (`auditorias/` del repositorio auditado por PR, o rama transitoria), formato del informe y idioma de los nombres de campos.
+
+El portado se hace por bloques (definir, revisar, confirmar, avanzar) desde la rama `claude/gallant-babbage-2srymf`, que se conserva hasta completarlo.
+
 ## Qué hace dlc.audit
 
 Actúa como **auditor externo** en un flujo integrador-auditor (ver `protocolo.md`). Recibe el enlace de un repositorio, no modifica su código y entrega:
@@ -52,6 +64,16 @@ Actúa como **auditor externo** en un flujo integrador-auditor (ver `protocolo.m
 | Dictamen | `critical`, `high` y `medium` bloquean; los no verificados no. Confirmado por el usuario |
 | Cierre del ciclo | Al aprobar: borrar ramas `audit/*` del ciclo y preguntar al usuario si genera el prompt de merge. Confirmado por el usuario |
 | Almacenamiento de resultados | `audits/<repo>/<run_id>/`, ignorado por git (puede contener información sensible) |
+
+## Decisiones de la sesión 2026-11-26
+
+| Decisión | Valor |
+|---|---|
+| Plataformas v1 | Multiplataforma obligatoria (Claude, Codex, ChatGPT, Antigravity) |
+| Rama `claude/gallant-babbage-2srymf` (PR #1) | Portado selectivo y luego cierre del PR y borrado de la rama, con etiqueta de archivo |
+| Rama `claude/nice-carson-yc8xgi` | Descartada por el usuario (informes de auditoría de `apex.skills`; último commit `acee291`) |
+| Método de merge a `main` | Merge commit (`--no-ff`) |
+| Secuencia | Fusionar el núcleo ahora con v1 marcado incompleto; la multiplataforma se construye después |
 
 ## Pendientes de definición [No verificado]
 

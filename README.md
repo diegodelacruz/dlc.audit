@@ -13,6 +13,8 @@ Tú -> [enlace] -> AUDITOR -> prompt A -> Tú -> INTEGRADOR -> prompt B (cierre)
 
 Detalle y garantías: [docs/protocolo.md](docs/protocolo.md).
 
+> **Estado:** v1 incompleta. El núcleo y el protocolo funcionan con Claude Code; la compatibilidad con Codex, ChatGPT y Antigravity (obligatoria en v1) está pendiente. Ver [docs/alcance.md](docs/alcance.md).
+
 ## Qué audita (Fase 1)
 
 | Dominio | Ejemplos de reglas |
