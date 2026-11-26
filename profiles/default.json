@@ -1,0 +1,27 @@
+{
+  "name": "default",
+  "version": "1.0.0",
+  "description": "Perfil base: todos los catálogos de Fase 1 con severidades por defecto.",
+  "catalogs": ["transversal", "skills-agentes", "sql-plsql", "python"],
+  "disabled_rules": [],
+  "severity_overrides": {},
+  "exclude_globs": [".git/**", "node_modules/**", ".venv/**", "venv/**", "**/__pycache__/**", "dist/**", "build/**"],
+  "prompt_conventions": {
+    "*": [
+      "No emojis en código.",
+      "Un commit por prompt, con mensaje en español que referencie los ids de hallazgo cubiertos.",
+      "Si el repositorio tiene AGENTS.md o CLAUDE.md, sus reglas prevalecen sobre este prompt en lo no indicado aquí."
+    ],
+    "sql-plsql": [
+      "Indentar con tabuladores (un tabulador por nivel); nunca espacios.",
+      "Todo en minúsculas, salvo cadenas de texto o palabras que el lenguaje exija en mayúsculas.",
+      "Comas separadoras al inicio de la línea.",
+      "El where inicia con 1 = 1 y cada condición va en una línea nueva indentada.",
+      "Máximo un salto de línea entre bloques; sin salto tras begin inicial ni tras declaración de variables."
+    ],
+    "python": [
+      "Python 3, indentación de 4 espacios (PEP 8).",
+      "No introducir dependencias nuevas sin justificarlo en el mensaje del commit."
+    ]
+  }
+}

@@ -1,0 +1,39 @@
+# Informe de auditoría: $target_name
+
+| Campo | Valor |
+|---|---|
+| Run | `$run_id` |
+| Repositorio auditado | `$target_name` |
+| Revisión auditada | `$revision`$dirty_note |
+| Perfil | `$profile` |
+| Auditor | dlc.audit $auditor_version (`$auditor_revision`) |
+| Inicio / fin (UTC) | $started_at / $finished_at |
+
+## Resumen ejecutivo
+
+$executive_summary
+
+## Resumen de hallazgos
+
+$severity_table
+
+$delta_section## Cobertura
+
+- Archivos analizados: $files_total
+- Por dominio: $domains
+- Reglas evaluadas: $rules_evaluated; no aplicables: $rules_na
+
+$rules_na_detail
+## Hallazgos
+
+$findings_section
+## Limitaciones
+
+$limitations
+
+## Prompts de cambio
+
+$prompts_index
+
+---
+Informe generado desde `hallazgos.json`; no editar a mano. Marcas de certeza: Verificado, **[Inferencial]**, **[No verificado]**.

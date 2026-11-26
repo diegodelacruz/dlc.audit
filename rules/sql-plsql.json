@@ -1,0 +1,113 @@
+{
+  "catalog": "sql-plsql",
+  "rules": [
+    {
+      "id": "SQL-001", "version": "1.0.0", "domain": "sql-plsql", "applies_to": ["sql-plsql"],
+      "title": "Indentación con espacios en lugar de tabuladores",
+      "description": "El código SQL/PL-SQL se indenta con espacios. La convención es un tabulador por nivel.",
+      "severity": "low", "effort": "S", "method": "deterministic", "detector": "sql_indent",
+      "remediation": "Convertir la indentación a tabuladores (un tabulador por nivel).",
+      "acceptance": "Ninguna línea de código inicia su indentación con espacios.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "convencion-interna", "source_verified": true
+    },
+    {
+      "id": "SQL-002", "version": "1.0.0", "domain": "sql-plsql", "applies_to": ["sql-plsql"],
+      "title": "Palabras reservadas en mayúsculas",
+      "description": "El código usa palabras reservadas en mayúsculas. La convención es minúsculas, salvo cadenas de texto o palabras que deban ir en mayúsculas por el lenguaje.",
+      "severity": "low", "effort": "S", "method": "deterministic", "detector": "sql_case",
+      "remediation": "Pasar las palabras reservadas a minúsculas, respetando las excepciones del lenguaje.",
+      "acceptance": "El código fuera de cadenas y comentarios no contiene palabras reservadas en mayúsculas, salvo excepciones justificadas.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "convencion-interna", "source_verified": true
+    },
+    {
+      "id": "SQL-003", "version": "1.0.0", "domain": "sql-plsql", "applies_to": ["sql-plsql"],
+      "title": "Comas al final de línea",
+      "description": "Los separadores van al inicio de la línea (campo1, luego , campo2). Se detectaron comas al final.",
+      "severity": "low", "effort": "S", "method": "deterministic", "detector": "sql_commas",
+      "remediation": "Mover las comas separadoras al inicio de la línea siguiente.",
+      "acceptance": "Las listas multilínea usan comas al inicio de línea.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "convencion-interna", "source_verified": true
+    },
+    {
+      "id": "SQL-004", "version": "1.0.0", "domain": "sql-plsql", "applies_to": ["sql-plsql"],
+      "title": "WHERE sin 1 = 1 como primera condición",
+      "description": "La convención es iniciar el WHERE con 1 = 1 y poner cada condición en una línea nueva indentada.",
+      "severity": "low", "effort": "S", "method": "deterministic", "detector": "sql_where",
+      "remediation": "Reescribir el WHERE iniciando con 1 = 1 y cada condición en su línea con and.",
+      "acceptance": "Todo WHERE inicia con 1 = 1.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "convencion-interna", "source_verified": true
+    },
+    {
+      "id": "SQL-005", "version": "1.0.0", "domain": "sql-plsql", "applies_to": ["sql-plsql"],
+      "title": "Constantes de negocio fijas en el código",
+      "description": "Estados, umbrales, códigos o reglas de negocio escritos como literales en lugar de leerse de una tabla de parámetros con vigencia.",
+      "severity": "medium", "effort": "M", "method": "judgment",
+      "remediation": "Crear o reutilizar una tabla de configuración con vigencia y versionado, y leer el valor desde ella.",
+      "acceptance": "Los literales señalados se obtienen de la tabla de parámetros.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "convencion-interna", "source_verified": true
+    },
+    {
+      "id": "SQL-006", "version": "1.0.0", "domain": "sql-plsql", "applies_to": ["sql-plsql"],
+      "title": "SQL dinámico construido por concatenación",
+      "description": "execute immediate con la sentencia armada por concatenación permite inyección SQL si algún fragmento proviene de entrada externa.",
+      "severity": "high", "effort": "M", "method": "deterministic", "detector": "sql_dynamic",
+      "remediation": "Usar variables de enlace (using) y validar con dbms_assert los identificadores que no se puedan enlazar.",
+      "acceptance": "La sentencia usa variables de enlace y los identificadores dinámicos se validan con dbms_assert.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "Guia de seguridad Oracle (SQL injection en PL/SQL)", "source_verified": false
+    },
+    {
+      "id": "SQL-007", "version": "1.0.0", "domain": "sql-plsql", "applies_to": ["sql-plsql"],
+      "title": "Excepción silenciada con WHEN OTHERS THEN NULL",
+      "description": "El bloque captura cualquier error y lo ignora. Los fallos pasan inadvertidos y los datos pueden quedar inconsistentes.",
+      "severity": "high", "effort": "S", "method": "deterministic", "detector": "sql_when_others",
+      "remediation": "Registrar el error (con traza) y relanzarlo, o manejar excepciones específicas.",
+      "acceptance": "No hay when others then null; los errores se registran y se propagan.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "Buenas practicas PL/SQL", "source_verified": false
+    },
+    {
+      "id": "SQL-008", "version": "1.0.0", "domain": "sql-plsql", "applies_to": ["sql-plsql"],
+      "title": "Proceso sin idempotencia",
+      "description": "Cargas o procesos DML que, al reejecutarse tras un fallo, duplican o corrompen datos por falta de claves únicas, merge o control de estado.",
+      "severity": "medium", "effort": "M", "method": "judgment",
+      "remediation": "Definir clave única y usar merge, o registrar estado de ejecución para poder reintentar sin efectos duplicados.",
+      "acceptance": "Reejecutar el proceso con los mismos datos no genera duplicados ni cambios adicionales.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "convencion-interna", "source_verified": true
+    },
+    {
+      "id": "SQL-009", "version": "1.0.0", "domain": "sql-plsql", "applies_to": ["sql-plsql"],
+      "title": "Tablas sin columnas de auditoría",
+      "description": "Las tablas o procesos no registran quién y cuándo creó o modificó cada registro, lo que impide la trazabilidad.",
+      "severity": "medium", "effort": "M", "method": "judgment",
+      "remediation": "Añadir columnas de auditoría (usuario y fecha de creación y modificación) y poblarlas por trigger o por la capa de acceso.",
+      "acceptance": "Las tablas señaladas registran usuario y fecha de creación y modificación.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "convencion-interna", "source_verified": true
+    },
+    {
+      "id": "SQL-010", "version": "1.0.0", "domain": "sql-plsql", "applies_to": ["sql-plsql"],
+      "title": "Control transaccional inconsistente",
+      "description": "Commit o rollback dentro de procedimientos reutilizables sin documentar quién controla la transacción, o ausencia de rollback ante error.",
+      "severity": "medium", "effort": "M", "method": "judgment",
+      "remediation": "Definir quién controla la transacción (llamador u orquestador), retirar commits internos o documentarlos, y garantizar rollback ante error.",
+      "acceptance": "El control de la transacción es explícito y coherente en el flujo señalado.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "Buenas practicas PL/SQL", "source_verified": false
+    },
+    {
+      "id": "SQL-011", "version": "1.0.0", "domain": "sql-plsql", "applies_to": ["sql-plsql"],
+      "title": "SELECT * en código de aplicación",
+      "description": "select * acopla el código al orden y la cantidad de columnas y puede exponer campos no previstos.",
+      "severity": "low", "effort": "S", "method": "deterministic", "detector": "sql_select_star",
+      "remediation": "Listar explícitamente las columnas necesarias.",
+      "acceptance": "Las consultas listan columnas explícitas.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "Buenas practicas SQL", "source_verified": false
+    },
+    {
+      "id": "SQL-012", "version": "1.0.0", "domain": "sql-plsql", "applies_to": ["sql-plsql"],
+      "title": "APEX: autorización o saneamiento insuficiente",
+      "description": "Páginas, procesos o regiones de Oracle APEX sin esquema de autorización, o con ítems de página concatenados en SQL en lugar de enlazados.",
+      "severity": "high", "effort": "M", "method": "judgment",
+      "remediation": "Asignar esquemas de autorización, enlazar los ítems con :ITEM en lugar de concatenarlos y revisar el escape de salida.",
+      "acceptance": "Los componentes señalados tienen autorización y no concatenan ítems en SQL.",
+      "valid_from": "2026-11-26", "valid_to": null, "source": "Guia de seguridad Oracle APEX", "source_verified": false
+    }
+  ]
+}
