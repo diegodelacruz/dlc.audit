@@ -10,7 +10,8 @@ from pathlib import Path
 
 from . import __version__
 from .common import (
-    SCHEMA_VERSION, ROOT, _git, finding_id, git_info, load_catalog, load_profile, utc_now,
+    SCHEMA_VERSION, ROOT, _git, current_ref, finding_id, git_info, load_catalog, load_profile,
+    sanitize_url, utc_now,
 )
 
 MAX_TEXT_BYTES = 1_000_000
@@ -565,7 +566,8 @@ DETECTORS = {
 
 # ---------------------------------------------------------------- orquestación
 
-def run_scan(target: Path, profile_name: str = "default", root: Path = ROOT) -> dict:
+def run_scan(target: Path, profile_name: str = "default", root: Path = ROOT,
+             ref: str | None = None, baseline: dict | None = None) -> dict:
     target = target.resolve()
     if not target.is_dir():
         raise SystemExit(f"El objetivo no es un directorio: {target}")
@@ -614,7 +616,11 @@ def run_scan(target: Path, profile_name: str = "default", root: Path = ROOT) -> 
         "auditor": {"name": "dlc.audit", "version": __version__,
                     "revision": _git(root, "rev-parse", "HEAD") or "no-git"},
         "profile": {"name": profile["name"], "version": profile["version"]},
-        "target": {"name": name, "path": str(target), **info},
+        "round": (baseline.get("round", 1) + 1) if baseline else 1,
+        "baseline_run_id": baseline["run_id"] if baseline else None,
+        "target": {"name": name, "path": str(target), **info,
+                   "url": sanitize_url(_git(target, "remote", "get-url", "origin") or ""),
+                   "ref": ref or current_ref(target)},
         "started_at": started, "finished_at": None,
         "coverage": {"files_total": len(files), "files_by_domain": dict(sorted(by_domain.items())),
                      "excluded": excluded},

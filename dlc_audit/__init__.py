@@ -1,3 +1,3 @@
-"""dlc.audit: auditor independiente de repositorios (solo lectura)."""
+"""dlc.audit: auditor externo e independiente de repositorios."""
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

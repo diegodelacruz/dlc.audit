@@ -6,12 +6,15 @@ Versión del contrato: `1.0` (campo `schema_version`). Las claves JSON van en in
 
 ```
 audits/<repo>/<run_id>/
-	hallazgos.json     # fuente de verdad
-	informe.md         # generado
+	hallazgos.json        # fuente de verdad
+	informe.md            # generado
+	prompt-integrador.md  # prompt A, generado
 	prompts/
 		INDEX.md
 		01-<grupo>.md
 ```
+
+La misma carpeta se publica en la rama `audit/<run_id>` del repositorio auditado como `.audit/<run_id>/` (con `target.path` anonimizado).
 
 `run_id` = `YYYYMMDDTHHMMZ-<repo>`.
 
@@ -23,7 +26,9 @@ audits/<repo>/<run_id>/
 | `run_id` | string | Identificador único del run |
 | `auditor` | objeto | `name`, `version`, `revision` (commit de dlc.audit) |
 | `profile` | objeto | `name`, `version` |
-| `target` | objeto | `name`, `path`, `revision` (commit auditado), `dirty` (bool) |
+| `round` | entero | 1 en la primera auditoría; baseline + 1 después |
+| `baseline_run_id` | string o null | Run anterior con el que se compara |
+| `target` | objeto | `name`, `path`, `revision` (commit auditado), `dirty` (bool), `url` (sin credenciales), `ref` (rama auditada) |
 | `started_at`, `finished_at` | string ISO 8601 UTC | Marcas de tiempo |
 | `coverage` | objeto | `files_total`, `files_by_domain`, `excluded` |
 | `rules` | lista | Estado de cada regla del perfil (ver abajo) |
@@ -70,6 +75,18 @@ En `--final` no puede quedar ninguna regla en `pending`.
 | `redacted` | `true` si el extracto oculta un secreto; no se compara el texto |
 | `note` | Opcional |
 
+## Cierre del integrador (`cierre.json`, prompt B)
+
+| Campo | Descripción |
+|---|---|
+| `run_id`, `base_revision` | Deben coincidir con el baseline |
+| `head_revision` | Último commit empujado; debe existir y descender de `base_revision` |
+| `branch` | Rama que se re-auditará |
+| `findings[]` | Un elemento por hallazgo del baseline: `id`, `status` (`fixed`, `not_applicable`, `not_fixed`, `partial`), `commits`, `files`, `verification`, `note` |
+| `out_of_scope_changes[]` | `path` y `reason` de archivos cambiados que ningún hallazgo cubre |
+
+`closure` genera `closure-check.json`: `errors`, `warnings` (deriva, archivos declarados que no cambiaron, commits fuera de rango), `changed_files`, `claims` y `contradicted` (declarados `fixed` que la nueva auditoría sigue detectando).
+
 ## Severidad
 
 | Nivel | Criterio |
@@ -112,4 +129,9 @@ Dos hallazgos de la misma regla con el mismo archivo y extracto colisionan; `val
 
 ## Perfil (`profiles/<nombre>.json`)
 
-Selecciona catálogos, deshabilita reglas, sobrescribe severidades, define exclusiones por glob y las convenciones que se inyectan en los prompts de cambio por dominio.
+Selecciona catálogos, deshabilita reglas, sobrescribe severidades, define exclusiones por glob y las convenciones que se inyectan en los prompts por dominio. Además:
+
+| Clave | Uso |
+|---|---|
+| `approval` | `block_on`: severidades que impiden la aprobación; `unverified_blocks`: si los no verificados bloquean (por defecto no) |
+| `handoff` | Por rol (`integrator`, `auditor`): `conversation` (`MISMA` o `NUEVA`) y `reason`. Se imprimen en la cabecera de cada prompt |

@@ -1,12 +1,17 @@
 # dlc.audit
 
-Auditor independiente de repositorios. Revisa otro repositorio en **solo lectura** y entrega:
+Auditor **externo e independiente** para un flujo de dos roles:
 
-- `informe.md`: informe de auditoría con hallazgos, severidad, certeza y evidencia (`archivo:línea`).
-- `hallazgos.json`: fuente de verdad, con identificadores estables para comparar auditorías.
-- `prompts/`: prompts de cambio listos para pegar en Claude Code dentro del repositorio auditado.
+- **Integrador:** el agente que construye, modifica y corrige repositorios.
+- **Auditor (este repositorio):** valida lo que hizo el integrador, sin ser juez y parte.
 
-dlc.audit **no corrige** el repositorio auditado. Las correcciones las ejecutas tú con los prompts generados.
+Recibe el **enlace** de un repositorio, lo audita, publica una rama `audit/<run_id>` con las observaciones y te entrega un prompt para el integrador. Cuando el integrador termina, te entrega un prompt de cierre que pegas aquí, y el auditor verifica y vuelve a auditar. Cada ronda son **dos pegados**.
+
+```
+Tú -> [enlace] -> AUDITOR -> prompt A -> Tú -> INTEGRADOR -> prompt B (cierre) -> Tú -> AUDITOR -> dictamen
+```
+
+Detalle y garantías: [docs/protocolo.md](docs/protocolo.md).
 
 ## Qué audita (Fase 1)
 
@@ -27,35 +32,50 @@ El catálogo completo está en `rules/*.json` (38 reglas). Qué queda fuera: `do
 
 ## Uso
 
-### Con Claude Code (recomendado)
+### Ronda 1
 
-Abre Claude Code en este repositorio y pide:
-
-```
-/audit-repo C:\ruta\al\repositorio-objetivo
-```
-
-La skill ejecuta el flujo completo. Tras aplicar los prompts de cambio en el objetivo:
+En Claude Code, dentro de este repositorio:
 
 ```
-/reaudit C:\ruta\al\repositorio-objetivo audits\<repo>\<run>\hallazgos.json
+/audit-repo https://github.com/<usuario>/<repositorio> [rama-o-commit]
 ```
 
-### Manual
+El auditor clona, audita, valida, genera informe y prompts, publica la rama `audit/<run_id>` y te devuelve el **prompt A**. Cada prompt trae su indicación `CONVERSACIÓN: MISMA` o `NUEVA`. Pega el prompt A en el integrador.
+
+### Cierre del integrador y ronda 2
+
+El integrador responde con el **prompt B** (cierre). Pégalo en el auditor:
 
 ```
-python -m dlc_audit scan <objetivo> --out audits/<repo>/<run>/hallazgos.json
+/reaudit
+<pega aquí el cierre completo>
+```
+
+El auditor verifica lo declarado contra el repositorio, audita todo de nuevo, compara con la ronda anterior y emite el dictamen. Si no es `APROBADO`, te entrega un nuevo prompt A. El ciclo termina con `APROBADO`.
+
+### Manual (sin skills)
+
+```
+python -m dlc_audit fetch <url> [--ref <rama>]
+python -m dlc_audit scan <ruta-clon> --ref <rama>
 # evaluar reglas pending (agente dlc-auditor) y completar executive_summary
-python -m dlc_audit validate audits/<repo>/<run>/hallazgos.json --assign-ids
-python -m dlc_audit validate audits/<repo>/<run>/hallazgos.json --final
-python -m dlc_audit render audits/<repo>/<run>/hallazgos.json
+python -m dlc_audit validate <hallazgos.json> --assign-ids
+python -m dlc_audit validate <hallazgos.json> --final
+python -m dlc_audit render <hallazgos.json>
+python -m dlc_audit publish <hallazgos.json> --push
+# ronda 2
+python -m dlc_audit closure --baseline <baseline.json> --cierre <cierre.json> --repo <ruta-clon>
+python -m dlc_audit scan <ruta-clon> --ref <rama> --baseline <baseline.json>
 ```
 
-`scan` por sí solo ya entrega los hallazgos deterministas. Las reglas de juicio quedan en `pending` hasta que el agente las evalúe; `render` no genera entregables de un run que no pase `validate --final`.
+Requisito: permiso de **escritura** en el repositorio auditado, solo para empujar la rama `audit/<run_id>`.
 
 ## Garantías de diseño
 
-- **Solo lectura** sobre el objetivo: `scan` no escribe en él y las reglas del agente lo prohíben.
+- **El código auditado no se modifica.** La única escritura es una rama nueva `audit/<run_id>` con archivos bajo `.audit/<run_id>/`; `publish` aborta si el diff toca otra ruta, nunca fuerza el push y la rama no se fusiona.
+- **El cierre del integrador se verifica, no se cree:** commits, archivos, deriva (cambios no declarados) y correcciones declaradas que siguen presentes.
+- **Dictamen explícito** y configurable (`approval` en el perfil).
+- **Prompts autosuficientes** con indicación `MISMA` o `NUEVA` conversación (`handoff` en el perfil).
 - **Evidencia verificada:** `validate` comprueba que cada cita exista en el archivo real; una cita inventada se rechaza.
 - **Certeza explícita:** `verified`, `inferential` (**[Inferencial]**), `unverified` (**[No verificado]**).
 - **Secretos redactados** en informe y prompts.
@@ -66,15 +86,16 @@ python -m dlc_audit render audits/<repo>/<run>/hallazgos.json
 
 ```
 AGENTS.md                reglas para agentes
-docs/                    alcance, contrato de salida, metodología
+docs/                    protocolo, alcance, contrato de salida, metodología
 rules/                   catálogos de reglas (JSON, versionados)
 profiles/                perfiles: catálogos, severidades, convenciones de prompts
-templates/               plantillas de informe y prompts
-dlc_audit/               scan, validate, render (Python, solo biblioteca estándar)
+templates/               plantillas de informe y de prompts (integrador y detalle)
+dlc_audit/               scan, validate, render, fetch, publish, closure (Python, solo biblioteca estándar)
 .claude/agents/          subagente dlc-auditor
 .claude/skills/          audit-repo, reaudit
 tests/                   pruebas (unittest)
 audits/                  resultados (ignorado por git)
+work/                    clones de trabajo (ignorado por git)
 ```
 
 ## Pruebas
@@ -85,6 +106,7 @@ python -m unittest discover -s tests
 
 ## Documentación
 
+- [Protocolo auditor-integrador](docs/protocolo.md)
 - [Alcance y fases](docs/alcance.md)
 - [Contrato de salida](docs/contrato-salida.md)
 - [Metodología](docs/metodologia.md)

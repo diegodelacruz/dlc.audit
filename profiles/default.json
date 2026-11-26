@@ -1,11 +1,25 @@
 {
   "name": "default",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Perfil base: todos los catálogos de Fase 1 con severidades por defecto.",
-  "catalogs": ["transversal", "skills-agentes", "sql-plsql", "python"],
+  "catalogs": [
+    "transversal",
+    "skills-agentes",
+    "sql-plsql",
+    "python"
+  ],
   "disabled_rules": [],
   "severity_overrides": {},
-  "exclude_globs": [".git/**", "node_modules/**", ".venv/**", "venv/**", "**/__pycache__/**", "dist/**", "build/**"],
+  "exclude_globs": [
+    ".git/**",
+    "node_modules/**",
+    ".venv/**",
+    "venv/**",
+    "**/__pycache__/**",
+    "dist/**",
+    "build/**",
+    ".audit/**"
+  ],
   "prompt_conventions": {
     "*": [
       "No emojis en código.",
@@ -23,5 +37,24 @@
       "Python 3, indentación de 4 espacios (PEP 8).",
       "No introducir dependencias nuevas sin justificarlo en el mensaje del commit."
     ]
+  },
+  "approval": {
+    "block_on": [
+      "critical",
+      "high",
+      "medium"
+    ],
+    "unverified_blocks": false,
+    "description": "Hallazgos de estas severidades bloquean la aprobación. Los no verificados nunca bloquean."
+  },
+  "handoff": {
+    "integrator": {
+      "conversation": "MISMA",
+      "reason": "conserva el contexto de lo construido; si esa conversación ya no existe o fue compactada, usa una NUEVA: el prompt es autosuficiente y no requiere contexto previo"
+    },
+    "auditor": {
+      "conversation": "MISMA",
+      "reason": "conserva la ronda anterior y ahorra pasos; si ya no existe, abre una NUEVA sesión en el repositorio dlc.audit: el prompt es autosuficiente"
+    }
   }
 }

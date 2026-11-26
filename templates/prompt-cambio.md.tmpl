@@ -4,7 +4,7 @@
 > Repositorio `$target_name`, revisión auditada `$revision`.
 > Hallazgos cubiertos: $finding_ids
 
-Ejecuta este prompt dentro del repositorio `$target_name`.
+Este prompt forma parte del lote que indica `INDEX.md`; se ejecuta dentro del repositorio `$target_name`.
 
 ## Contexto
 
@@ -35,11 +35,6 @@ $acceptance
 - Cualquier archivo o hallazgo no listado aquí.
 - Refactorizaciones, renombrados o mejoras no solicitadas.
 
-## Entrega
+## Registro para el cierre
 
-Al terminar, responde con:
-
-1. Hallazgos corregidos (id y archivos tocados).
-2. Hallazgos que ya no aplicaban o no pudiste confirmar, con el motivo.
-3. Cualquier archivo fuera de Alcance que haya sido necesario tocar y por qué.
-4. Cómo verificaste cada corrección.
+Al terminar este grupo, anota para cada id de hallazgo: estado (`fixed`, `not_applicable`, `not_fixed`, `partial`), commits, archivos tocados y cómo lo verificaste. Esos datos van en el prompt de cierre que entregas al final del lote; no respondas aparte.

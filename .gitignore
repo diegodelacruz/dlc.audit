@@ -7,5 +7,6 @@ venv/
 .vscode/
 
 # Resultados de auditoría: pueden contener información sensible del objetivo.
+work/
 audits/*
 !audits/.gitkeep

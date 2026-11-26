@@ -94,5 +94,30 @@ def git_info(path: Path) -> dict:
     return {"revision": revision or "no-git", "dirty": bool(status)}
 
 
+def sanitize_url(url: str) -> str:
+    """Quita credenciales incrustadas (https://usuario:token@host/...) antes de registrar una URL."""
+    return re.sub(r"^([a-z][a-z0-9+.-]*://)[^/@\s]+@", r"\1", url.strip(), flags=re.I)
+
+
+def current_ref(path: Path) -> str:
+    """Nombre de la rama actual; 'HEAD' si está desacoplado."""
+    return _git(path, "rev-parse", "--abbrev-ref", "HEAD") or "no-git"
+
+
+def is_blocking(finding: dict, profile: dict) -> bool:
+    cfg = profile.get("approval", {})
+    if finding["confidence"] == "unverified" and not cfg.get("unverified_blocks", False):
+        return False
+    return finding["severity"] in cfg.get("block_on", ["critical", "high", "medium"])
+
+
+def verdict(findings: list[dict], profile: dict) -> str:
+    if not findings:
+        return "APROBADO"
+    if any(is_blocking(f, profile) for f in findings):
+        return "NO APROBADO"
+    return "APROBADO CON OBSERVACIONES"
+
+
 def utc_now() -> str:
     return dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")

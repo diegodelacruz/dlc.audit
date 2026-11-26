@@ -2,7 +2,7 @@
 
 ## Principios
 
-1. **Independencia:** el auditor no corrige. Sin escritura en el objetivo; las correcciones las ejecuta otra sesión con los prompts generados.
+1. **Independencia:** el auditor no corrige. No modifica el código auditado; su única escritura es la rama `audit/<run_id>`. Las correcciones las hace el integrador (ver `protocolo.md`).
 2. **Evidencia verificable:** `validate` comprueba que cada cita existe en el archivo. Un hallazgo sin evidencia comprobable se rechaza.
 3. **Determinista primero, juicio después:** lo que se puede detectar con código se detecta con `scan`. El agente solo evalúa reglas `judgment`.
 4. **Parametrizado:** las reglas viven en catálogos versionados con vigencia.
@@ -12,7 +12,7 @@
 ## Flujo
 
 ```
-objetivo (solo lectura)
+enlace --fetch--> clon de trabajo (work/)
 	|
 	v
 scan  ->  hallazgos.json (reglas deterministas evaluadas, juicio = pending)
@@ -24,14 +24,19 @@ agente evalúa reglas pending y añade hallazgos (detected_by = agent)
 validate --assign-ids  ->  validate --final
 	|
 	v
-render  ->  informe.md + prompts/
+render  ->  informe.md + prompt-integrador.md + prompts/
+	|
+	v
+publish --push  ->  rama audit/<run_id> (solo .audit/<run_id>/)
 ```
+
+La ronda siguiente parte del cierre del integrador: `closure`, `scan --baseline`, evaluación completa, `closure --new-run`, `render --baseline --closure`.
 
 ## Cómo dar acceso al repositorio objetivo
 
-- **Sesión local:** abre Claude Code en este repositorio y pasa la ruta del objetivo (de preferencia un clon aparte, sin cambios sin commitear). Si está fuera del directorio de trabajo, añádelo con `--add-dir`.
-- **Sesión en la nube:** adjunta el repositorio objetivo a la sesión y usa su ruta clonada.
-- Audita siempre un **commit concreto**. `scan` registra `revision` y `dirty`; un objetivo con cambios sin commitear produce una auditoría no reproducible y se advierte en `limitations`.
+- **Sesión local:** pasa la URL a la skill `audit-repo`; `fetch` clona en `work/` (ignorado por git) con los hooks de git desactivados. Requiere credenciales git con escritura para publicar la rama.
+- **Sesión en la nube:** adjunta el repositorio con acceso de escritura (`add_repo`, acceso `push`) y luego `fetch` sobre su URL.
+- Se audita siempre un **commit concreto**. `scan` registra `revision` y `dirty`; un clon con cambios sin commitear produce una auditoría no reproducible y se advierte en `limitations`.
 
 ## Evaluación de reglas `judgment`
 
@@ -55,7 +60,7 @@ Los prompts salen ordenados por severidad máxima del grupo.
 
 ## Re-auditoría
 
-Tras ejecutar los prompts: nuevo `scan` sobre la nueva revisión, evaluación de reglas `judgment`, y `render --baseline <run-anterior>/hallazgos.json`. El informe muestra nuevos, persistentes y resueltos.
+Parte del cierre del integrador (prompt B). Primero se verifica lo declarado (`closure`); luego se audita **todo** de nuevo, no solo lo declarado, porque las correcciones pueden introducir regresiones. El informe muestra nuevos, persistentes, resueltos y declaraciones contradichas. El baseline se lee de la rama `audit/<run_id>`.
 
 ## Limitaciones conocidas
 

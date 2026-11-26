@@ -1,0 +1,61 @@
+# Prompt para el INTEGRADOR: corregir hallazgos de auditoría (ronda $round)
+
+**CONVERSACIÓN: $conv_i**
+
+$why_i
+
+> Pégalo en el agente integrador, con acceso a `$repo_url`. Es autosuficiente: no necesitas nada de la conversación del auditor.
+
+## Situación
+
+Un auditor externo e independiente (dlc.audit) revisó `$repo_url`, rama `$ref`, commit `$revision`. Dictamen: **$verdict**. Hallazgos: $n_total ($n_blocking bloqueantes). Tu tarea es corregirlos y devolver un cierre verificable. El auditor volverá a auditar y no dará por cierto lo que declares: lo comprobará en el repositorio.
+
+## Hallazgos (resumen; el detalle y la evidencia están en la rama del auditor)
+
+$summary_table
+
+## Pasos
+
+1. Lee el detalle sin fusionar la rama del auditor:
+
+   ```
+   git fetch origin $audit_branch
+   git worktree add --detach ../audit-$short_run FETCH_HEAD
+   ```
+
+   También puedes leer los archivos de `.audit/$run_id/` en la rama `$audit_branch` con las herramientas de GitHub. Empieza por `.audit/$run_id/prompts/INDEX.md` y ejecuta los prompts en el orden indicado: cada uno trae evidencia, qué hacer y criterios de aceptación.
+2. Trabaja sobre `$ref` (o una rama de corrección creada desde él; indícala en `branch` del cierre). Un commit por grupo de cambio, citando los ids de hallazgo. No incorpores `.audit/` ni `audit/*` a tu rama.
+3. Antes de cambiar cada hallazgo, verifícalo contra el código actual. Si no aplica o discrepas, no lo cambies: marca `not_applicable` o `not_fixed` con el motivo. La decisión la toma el auditor, no tú.
+4. Si necesitas tocar archivos que ningún hallazgo cubre, declara cada uno en `out_of_scope_changes` con el motivo.
+5. Haz push de tu rama y confirma que `head_revision` es el commit empujado.
+6. Responde **únicamente** con el prompt de cierre siguiente, completado, dentro de un único bloque de código. Sustituye todos los `<...>`; no dejes ninguno.
+
+## Prompt de cierre (plantilla a completar)
+
+````
+# Cierre de ronda $round: solicitud de re-auditoría
+
+**CONVERSACIÓN: $conv_a**
+
+$why_a
+
+Rol: eres el AUDITOR externo y trabajas en el repositorio dlc.audit. No confíes en este cierre: verifícalo contra el repositorio.
+Ejecuta la skill `reaudit` con estos datos:
+
+- Repositorio: $repo_url
+- Rama a re-auditar: <rama del integrador> (commit <head_revision>)
+- Baseline: rama `$audit_branch`, archivo `.audit/$run_id/hallazgos.json` (ronda $round, revisión $revision)
+- Pasos: guarda el JSON de abajo como `cierre.json`; ejecuta `python -m dlc_audit closure` contra el repositorio; re-audita la nueva revisión; compara con el baseline; publica la nueva rama de auditoría y entrega el dictamen. Si el dictamen es NO APROBADO, entrega también el nuevo prompt para el integrador.
+
+## Resumen del integrador
+
+<2 a 4 líneas: qué se hizo, qué no y por qué>
+
+## Cierre
+
+```json
+$closure_json
+```
+````
+
+Reglas del cierre: `status` es `fixed`, `not_applicable`, `not_fixed` o `partial`. `fixed` exige `commits`, `files` y `verification` (qué comprobaste y cómo). Los demás estados exigen `note` con el motivo.

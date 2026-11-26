@@ -7,7 +7,12 @@
 | Revisión auditada | `$revision`$dirty_note |
 | Perfil | `$profile` |
 | Auditor | dlc.audit $auditor_version (`$auditor_revision`) |
+| Ronda | $round$baseline_note |
 | Inicio / fin (UTC) | $started_at / $finished_at |
+
+## Dictamen: $verdict
+
+$verdict_detail
 
 ## Resumen ejecutivo
 
@@ -17,7 +22,7 @@ $executive_summary
 
 $severity_table
 
-$delta_section## Cobertura
+$delta_section$closure_section## Cobertura
 
 - Archivos analizados: $files_total
 - Por dominio: $domains
@@ -31,7 +36,7 @@ $findings_section
 
 $limitations
 
-## Prompts de cambio
+## Entregables para el integrador
 
 $prompts_index
 

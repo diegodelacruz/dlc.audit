@@ -2,10 +2,13 @@
 from __future__ import annotations
 
 import re
+import json
 from pathlib import Path
 from string import Template
 
-from .common import CONFIDENCE_LABEL, ROOT, SEVERITIES, load_catalog, load_profile, normalize
+from .common import (
+    CONFIDENCE_LABEL, ROOT, SEVERITIES, is_blocking, load_catalog, load_profile, normalize, verdict,
+)
 
 SEV_ES = {"critical": "Crítica", "high": "Alta", "medium": "Media", "low": "Baja", "info": "Informativa"}
 EFFORT_ES = {"S": "S (menos de 1 h)", "M": "M (menos de 1 día)", "L": "L (más de 1 día)"}
@@ -96,7 +99,7 @@ def render_prompts(run: dict, out_dir: Path, root: Path = ROOT) -> list[tuple[st
         index.append((fname, group, items))
 
     lines = ["# Índice de prompts de cambio", "",
-             f"Run `{run['run_id']}`. Ejecutar en orden, uno por sesión y por commit, dentro del repositorio auditado.", "",
+             f"Run `{run['run_id']}`. El integrador los ejecuta en este orden, dentro de una misma sesión, con un commit por prompt.", "",
              "| # | Archivo | Grupo | Hallazgos | Severidad máxima |", "|---|---|---|---|---|"]
     for i, (fname, group, items) in enumerate(index, 1):
         lines.append(f"| {i} | [{fname}]({fname}) | {group} | {len(items)} | {SEV_ES[items[0]['severity']]} |")
@@ -104,6 +107,52 @@ def render_prompts(run: dict, out_dir: Path, root: Path = ROOT) -> list[tuple[st
         lines.append("| - | - | Sin hallazgos | 0 | - |")
     (prompts_dir / "INDEX.md").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
     return index
+
+
+def _conversation(profile: dict, role: str) -> tuple[str, str]:
+    """(MISMA|NUEVA, motivo) para el rol indicado; configurable en el perfil (handoff)."""
+    cfg = profile.get("handoff", {}).get(role, {"conversation": "NUEVA", "reason": "el prompt es autosuficiente"})
+    return cfg["conversation"], cfg["reason"][0].upper() + cfg["reason"][1:] + "."
+
+
+def render_integrator_prompt(run: dict, out_dir: Path, root: Path = ROOT) -> Path | None:
+    """Prompt único para el integrador, con plantilla de cierre prellenada. None si no hay hallazgos."""
+    findings = _sorted_findings(run["findings"])
+    if not findings:
+        return None
+    profile = load_profile(run["profile"]["name"], root)
+    rows = ["| Id | Severidad | Certeza | Bloquea | Título | Archivos |", "|---|---|---|---|---|---|"]
+    for f in findings:
+        paths = ", ".join(f"`{p}`" for p in dict.fromkeys(e["path"] for e in f["evidence"]))
+        rows.append(f"| `{f['id']}` | {SEV_ES[f['severity']]} | {CONFIDENCE_LABEL[f['confidence']]} | "
+                    f"{'sí' if is_blocking(f, profile) else 'no'} | {f['title']} | {paths} |")
+    entry = {"status": "<fixed|not_applicable|not_fixed|partial>", "commits": ["<sha>"], "files": ["<ruta>"],
+             "verification": "<qué comprobaste y cómo>", "note": "<obligatorio si no es fixed>"}
+    items = ",\n".join("    " + json.dumps({"id": f["id"], **entry}, ensure_ascii=False) for f in findings)
+    closure_json = (
+        "{\n"
+        f'  "run_id": {json.dumps(run["run_id"])},\n'
+        f'  "base_revision": {json.dumps(run["target"]["revision"])},\n'
+        '  "head_revision": "<sha del último commit empujado>",\n'
+        '  "branch": "<rama que auditará el auditor>",\n'
+        f'  "findings": [\n{items}\n  ],\n'
+        '  "out_of_scope_changes": []\n'
+        "}"
+    )
+    conv_i, why_i = _conversation(profile, "integrator")
+    conv_a, why_a = _conversation(profile, "auditor")
+    text = _template("prompt-integrador.md.tmpl", root).substitute(
+        round=run.get("round", 1), repo_url=run["target"].get("url") or run["target"]["name"],
+        ref=run["target"].get("ref", "main"), revision=run["target"]["revision"],
+        verdict=verdict(run["findings"], profile), n_total=len(findings),
+        n_blocking=sum(1 for f in findings if is_blocking(f, profile)),
+        summary_table="\n".join(rows), audit_branch=f"audit/{run['run_id']}", run_id=run["run_id"],
+        short_run=run["run_id"][:13], closure_json=closure_json,
+        conv_i=conv_i, why_i=why_i, conv_a=conv_a, why_a=why_a,
+    )
+    path = out_dir / "prompt-integrador.md"
+    path.write_text(text, encoding="utf-8", newline="\n")
+    return path
 
 
 def _delta(run: dict, baseline: dict) -> str:
@@ -124,8 +173,34 @@ def _delta(run: dict, baseline: dict) -> str:
     return "\n".join(rows) + "\n"
 
 
-def render_report(run: dict, out_dir: Path, index: list, baseline: dict | None = None, root: Path = ROOT) -> Path:
+def _closure_section(check: dict) -> str:
+    rows = ["## Verificación del cierre del integrador", "",
+            "| Declarado | Cantidad |", "|---|---|"]
+    rows += [f"| {k} | {v} |" for k, v in check.get("claims", {}).items()]
+    rows.append("")
+    if check.get("contradicted"):
+        rows.append("**Correcciones declaradas como `fixed` que la nueva auditoría sigue detectando:** "
+                    + ", ".join(f"`{i}`" for i in check["contradicted"]))
+        rows.append("")
+    for title, key in (("Errores", "errors"), ("Advertencias (discrepancias y deriva)", "warnings")):
+        if check.get(key):
+            rows.append(f"**{title}:**")
+            rows += [f"- {m}" for m in check[key]]
+            rows.append("")
+    return "\n".join(rows) + "\n"
+
+
+def render_report(run: dict, out_dir: Path, index: list, baseline: dict | None = None, root: Path = ROOT,
+                  closure: dict | None = None, has_integrator_prompt: bool = False) -> Path:
     findings = run["findings"]
+    profile = load_profile(run["profile"]["name"], root)
+    dictamen = verdict(findings, profile)
+    n_block = sum(1 for f in findings if is_blocking(f, profile))
+    detail = {
+        "APROBADO": "No hay hallazgos abiertos. No se requiere nueva ronda.",
+        "APROBADO CON OBSERVACIONES": f"Hay {len(findings)} observación(es), ninguna bloqueante. Corregirlas es opcional.",
+        "NO APROBADO": f"Hay {n_block} hallazgo(s) bloqueante(s) de {len(findings)}. Se requiere una nueva ronda tras corregirlos.",
+    }[dictamen]
     counts = {s: sum(1 for f in findings if f["severity"] == s) for s in SEVERITIES}
     table = ["| Severidad | Hallazgos |", "|---|---|"] + [f"| {SEV_ES[s]} | {counts[s]} |" for s in SEVERITIES]
     table.append(f"| **Total** | **{len(findings)}** |")
@@ -154,15 +229,22 @@ def render_report(run: dict, out_dir: Path, index: list, baseline: dict | None =
     if na:
         na_detail = "Reglas no aplicables:\n\n" + "\n".join(f"- `{r['id']}`: {r['note']}" for r in na) + "\n"
     domains = ", ".join(f"{k} ({v})" for k, v in run["coverage"]["files_by_domain"].items()) or "ninguno detectado"
-    prompts_index = ("\n".join(f"{i}. [{fname}](prompts/{fname}): {group}, {len(items)} hallazgo(s)"
-                               for i, (fname, group, items) in enumerate(index, 1))
-                     or "No se generaron prompts: no hay hallazgos.")
+    lines = []
+    if has_integrator_prompt:
+        lines.append("- [prompt-integrador.md](prompt-integrador.md): prompt único para el integrador (incluye la plantilla de cierre).")
+    lines += [f"- [prompts/{fname}](prompts/{fname}): {group}, {len(items)} hallazgo(s)"
+              for fname, group, items in index]
+    prompts_index = "\n".join(lines) or "No se generaron entregables: no hay hallazgos."
 
     text = _template("informe.md.tmpl", root).substitute(
         target_name=run["target"]["name"], run_id=run["run_id"], revision=run["target"]["revision"],
         dirty_note=" (con cambios sin commitear)" if run["target"].get("dirty") else "",
         profile=f"{run['profile']['name']} v{run['profile']['version']}",
         auditor_version=run["auditor"]["version"], auditor_revision=run["auditor"]["revision"][:12],
+        round=run.get("round", 1),
+        baseline_note=f" (baseline `{run['baseline_run_id']}`)" if run.get("baseline_run_id") else "",
+        verdict=dictamen, verdict_detail=detail,
+        closure_section=_closure_section(closure) if closure else "",
         started_at=run["started_at"], finished_at=run.get("finished_at") or "-",
         executive_summary=run["executive_summary"].strip() or "(pendiente)",
         severity_table="\n".join(table), delta_section=_delta(run, baseline) if baseline else "",
