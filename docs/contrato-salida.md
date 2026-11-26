@@ -4,8 +4,10 @@ Versión del contrato: `1.0` (campo `schema_version`). Las claves JSON van en in
 
 ## Estructura de carpetas de una auditoría
 
+> Estos archivos existen **solo** en el directorio de trabajo temporal (fuera de este repositorio) y en la rama `audit/<run_id>` del repositorio auditado mientras dura el ciclo. Este repositorio no guarda informes.
+
 ```
-audits/<repo>/<run_id>/
+<directorio-de-trabajo-temporal>/runs/<repo>/<run_id>/
 	hallazgos.json        # fuente de verdad
 	informe.md            # generado
 	prompt-integrador.md  # prompt A, generado
@@ -89,7 +91,8 @@ En `--final` no puede quedar ninguna regla en `pending`.
 
 ## Cierre del ciclo
 
-- `cleanup` genera `audits/<repo>/ciclo-<run_id-final>.json` (`run_ids`, `deleted`, `dry_run`, `verdict`) y archiva en `audits/<repo>/<run_id>/` los registros de cada rama antes de borrarla.
+- `cleanup` no escribe nada en disco: borra las ramas `audit/*` del ciclo e informa por pantalla.
+- `purge <repo>` elimina `runs/<repo>/` y `clones/<repo>/` del directorio de trabajo.
 - `merge-prompt` genera `prompt-merge.md` (prompt C) junto al run final. No se genera si la rama auditada ya es la principal.
 
 ## Severidad

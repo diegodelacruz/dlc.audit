@@ -34,7 +34,7 @@ La ronda siguiente parte del cierre del integrador: `closure`, `scan --baseline`
 
 ## Cómo dar acceso al repositorio objetivo
 
-- **Sesión local:** pasa la URL a la skill `audit-repo`; `fetch` clona en `work/` (ignorado por git) con los hooks de git desactivados. Requiere credenciales git con escritura para publicar la rama.
+- **Sesión local:** pasa la URL a la skill `audit-repo`; `fetch` clona en el directorio de trabajo temporal (fuera de este repositorio) con los hooks de git desactivados. Requiere credenciales git con escritura para publicar la rama.
 - **Sesión en la nube:** adjunta el repositorio con acceso de escritura (`add_repo`, acceso `push`) y luego `fetch` sobre su URL.
 - Se audita siempre un **commit concreto**. `scan` registra `revision` y `dirty`; un clon con cambios sin commitear produce una auditoría no reproducible y se advierte en `limitations`.
 

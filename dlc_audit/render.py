@@ -7,7 +7,8 @@ from pathlib import Path
 from string import Template
 
 from .common import (
-    CONFIDENCE_LABEL, ROOT, SEVERITIES, is_blocking, load_catalog, load_profile, normalize, verdict,
+    CONFIDENCE_LABEL, ROOT, SEVERITIES, ensure_outside_repo, is_blocking, load_catalog, load_profile, normalize,
+    verdict,
 )
 
 SEV_ES = {"critical": "Crítica", "high": "Alta", "medium": "Media", "low": "Baja", "info": "Informativa"}
@@ -55,6 +56,7 @@ def render_prompts(run: dict, out_dir: Path, root: Path = ROOT) -> list[tuple[st
     catalog = load_catalog(profile, root)
     conventions_cfg = profile.get("prompt_conventions", {})
     tmpl = _template("prompt-cambio.md.tmpl", root)
+    out_dir = ensure_outside_repo(out_dir)
     prompts_dir = out_dir / "prompts"
     prompts_dir.mkdir(parents=True, exist_ok=True)
     for old in prompts_dir.glob("*.md"):
@@ -120,6 +122,7 @@ def render_integrator_prompt(run: dict, out_dir: Path, root: Path = ROOT) -> Pat
     findings = _sorted_findings(run["findings"])
     if not findings:
         return None
+    out_dir = ensure_outside_repo(out_dir)
     profile = load_profile(run["profile"]["name"], root)
     rows = ["| Id | Severidad | Certeza | Bloquea | Título | Archivos |", "|---|---|---|---|---|---|"]
     for f in findings:
@@ -164,8 +167,7 @@ MERGE_COMMANDS = {
 }
 
 
-def render_merge_prompt(final_run: dict, branch: str, base: str, cycle_run_ids: list[str],
-                        root: Path = ROOT) -> str | None:
+def render_merge_prompt(final_run: dict, branch: str, base: str, root: Path = ROOT) -> str | None:
     """Prompt para que el integrador integre la rama aprobada. None si no hay nada que integrar."""
     if branch == base:
         return None
@@ -176,11 +178,16 @@ def render_merge_prompt(final_run: dict, branch: str, base: str, cycle_run_ids: 
     fmt = {"base": base, "branch": branch, "run": final_run["run_id"]}
     indent = "   "
     merge_cmds = "\n".join(indent + c.format(**fmt) for c in MERGE_COMMANDS[strategy])
-    run_ids = list(dict.fromkeys([*cycle_run_ids, final_run["run_id"]]))
-    cleanup = [f"{indent}git worktree remove --force ../audit-{rid.split('-')[0]}   # ignora el error si no existe" for rid in run_ids]
-    cleanup += [f"{indent}git worktree prune"]
-    cleanup += [f"{indent}git branch -D audit/{rid}   # ignora el error si no existe" for rid in run_ids]
-    cleanup += [f"{indent}git fetch origin --prune"]
+    cleanup = [
+        f"{indent}git worktree list",
+        f"{indent}# Por cada worktree cuya ruta sea ../audit-<sello>, resto de la auditoría:",
+        f"{indent}git worktree remove --force <ruta>",
+        f"{indent}git worktree prune",
+        f"{indent}git branch --list \"audit/*\"",
+        f"{indent}# Por cada rama local listada:",
+        f"{indent}git branch -D <rama>",
+        f"{indent}git fetch origin --prune",
+    ]
     conv, why = _conversation(profile, "integrator")
     return _template("prompt-merge.md.tmpl", root).substitute(
         conv=conv, why=why, repo_url=final_run["target"].get("url") or final_run["target"]["name"],
@@ -231,6 +238,7 @@ def _closure_section(check: dict) -> str:
 
 def render_report(run: dict, out_dir: Path, index: list, baseline: dict | None = None, root: Path = ROOT,
                   closure: dict | None = None, has_integrator_prompt: bool = False) -> Path:
+    out_dir = ensure_outside_repo(out_dir)
     findings = run["findings"]
     profile = load_profile(run["profile"]["name"], root)
     dictamen = verdict(findings, profile)

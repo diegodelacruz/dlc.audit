@@ -40,6 +40,7 @@ Actúa como **auditor externo** en un flujo integrador-auditor (ver `protocolo.m
 - Ejecutar el código auditado, sus tests o conectarse a bases de datos o a AWS.
 - Análisis de datos reales, rendimiento en tiempo de ejecución, pruebas de penetración.
 - Informes `.docx`/`.xlsx`/`.pdf`.
+- **Guardar informes de auditoría en este repositorio**, bajo cualquier forma (versionados, archivados o en disco).
 - Integración con CI y comentarios automáticos en PR.
 - Comunicación directa auditor-integrador: el usuario traslada los dos prompts de cada ronda.
 - Dominios no listados (Power BI, JDE, MongoDB).
@@ -63,7 +64,7 @@ Actúa como **auditor externo** en un flujo integrador-auditor (ver `protocolo.m
 | Conversación | Cada prompt indica `MISMA` o `NUEVA`; ambos son autosuficientes. Confirmado por el usuario |
 | Dictamen | `critical`, `high` y `medium` bloquean; los no verificados no. Confirmado por el usuario |
 | Cierre del ciclo | Al aprobar: borrar ramas `audit/*` del ciclo y preguntar al usuario si genera el prompt de merge. Confirmado por el usuario |
-| Almacenamiento de resultados | `audits/<repo>/<run_id>/`, ignorado por git (puede contener información sensible) |
+| Almacenamiento de resultados | **Ninguno en este repositorio.** Archivos de trabajo en el directorio temporal del sistema, purgados al cerrar el ciclo; el informe final solo en la conversación. Decisión del usuario, 2026-11-26 |
 
 ## Decisiones de la sesión 2026-11-26
 
@@ -79,6 +80,6 @@ Actúa como **auditor externo** en un flujo integrador-auditor (ver `protocolo.m
 
 - Permiso de escritura en los repositorios auditados (publicar y borrar ramas `audit/*`).
 - Si el integrador debe eliminar su rama de corrección tras el merge (hoy: solo si la creó exclusivamente para la auditoría).
-- Si `audits/` debe versionarse en un repositorio privado aparte para trazabilidad histórica.
+- Cómo conservar, si se necesita, la trazabilidad de una auditoría sin guardar informes en este repositorio (hoy: ninguna; solo perdura lo que quede en el repositorio auditado).
 - Umbrales de severidad que bloquean una entrega (cuando exista CI).
 - Lista de excepciones aprobadas por proyecto (mecanismo de supresión con aprobación).

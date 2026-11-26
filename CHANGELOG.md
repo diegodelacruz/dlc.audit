@@ -4,6 +4,25 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-26
+
+### Cambiado (incompatible)
+
+- **Este repositorio ya no guarda informes de auditoría, bajo ningún concepto.** Los archivos de trabajo (`hallazgos.json`, informes, prompts, cierres, clones) van al directorio temporal del sistema (`DLC_AUDIT_WORKDIR` para cambiarlo); el código rechaza cualquier ruta dentro de este repositorio (`PolicyError`).
+- `cleanup` ya no archiva los registros antes de borrar las ramas `audit/*` ni escribe `ciclo-*.json`.
+- `merge-prompt` ya no depende de un archivo de ciclo: las instrucciones de limpieza del integrador no requieren estado.
+- `fetch` clona por defecto en el directorio temporal.
+
+### Añadido
+
+- `purge`: elimina los archivos de trabajo de un repositorio auditado; último paso de cada ciclo.
+- `workdir`: muestra el directorio de trabajo.
+- `tests/test_no_reports.py`: falla si hay archivos con aspecto de informe versionados, si un JSON versionado es un run de auditoría o si un ciclo completo deja archivos dentro del repositorio.
+
+### Eliminado
+
+- `audits/` (carpeta de informes) y su `.gitkeep`.
+
 ### Pendiente
 
 - Multiplataforma obligatoria en v1 (Codex con prioridad, ChatGPT, Antigravity): adaptadores, verificación de sincronía y requisitos oficiales con URL y fecha. Ver `docs/alcance.md`.

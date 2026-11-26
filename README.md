@@ -57,7 +57,9 @@ El auditor verifica lo declarado contra el repositorio, audita todo de nuevo, co
 
 ### Cierre del ciclo
 
-Con `APROBADO`, el auditor archiva los registros, **elimina las ramas `audit/*` del ciclo** y te **pregunta si genera el prompt de merge** a la rama principal. El merge lo ejecuta el integrador con ese prompt; el auditor no modifica nada más del repositorio auditado.
+Con `APROBADO`, el auditor **elimina las ramas `audit/*` del ciclo**, te **pregunta si genera el prompt de merge** a la rama principal y, al terminar, **purga sus archivos de trabajo**. El merge lo ejecuta el integrador con ese prompt; el auditor no modifica nada más del repositorio auditado.
+
+> **Este repositorio no guarda informes de auditoría, bajo ningún concepto.** Los archivos de trabajo van al directorio temporal del sistema (`python -m dlc_audit workdir`), el código rechaza cualquier ruta dentro de este repositorio y el informe final solo queda en la conversación. Una prueba automática lo verifica.
 
 ### Manual (sin skills)
 
@@ -74,8 +76,9 @@ python -m dlc_audit closure --baseline <baseline.json> --cierre <cierre.json> --
 python -m dlc_audit scan <ruta-clon> --ref <rama> --baseline <baseline.json>
 # cierre del ciclo (dictamen APROBADO)
 python -m dlc_audit cleanup <final.json> --repo <ruta-clon>            # simulación
-python -m dlc_audit cleanup <final.json> --repo <ruta-clon> --delete   # archiva y borra audit/*
+python -m dlc_audit cleanup <final.json> --repo <ruta-clon> --delete   # borra audit/*; no guarda registros
 python -m dlc_audit merge-prompt <final.json> --repo <ruta-clon>       # solo si aceptas
+python -m dlc_audit purge <nombre-repo>                                 # último paso: borra archivos de trabajo
 ```
 
 Requisito: permiso de **escritura** en el repositorio auditado, solo para crear y borrar ramas `audit/<run_id>`.
@@ -104,8 +107,6 @@ dlc_audit/               scan, validate, render, fetch, publish, closure (Python
 .claude/agents/          subagente dlc-auditor
 .claude/skills/          audit-repo, reaudit
 tests/                   pruebas (unittest)
-audits/                  resultados (ignorado por git)
-work/                    clones de trabajo (ignorado por git)
 ```
 
 ## Pruebas

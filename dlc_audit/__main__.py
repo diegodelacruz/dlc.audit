@@ -3,11 +3,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
+import shutil
 import sys
 from pathlib import Path
 
 from .closure import check_closure, cross_check
-from .common import load_json, save_json, utc_now
+from .common import PolicyError, ensure_outside_repo, load_json, save_json, utc_now, workdir
 from .gitops import GitError, cleanup, default_branch, fetch, publish
 from .render import render_integrator_prompt, render_merge_prompt, render_prompts, render_report
 from .scan import run_scan
@@ -17,7 +19,7 @@ from .validate import validate_run
 def cmd_scan(args: argparse.Namespace) -> int:
     baseline = load_json(Path(args.baseline)) if args.baseline else None
     run = run_scan(Path(args.target), args.profile, ref=args.ref, baseline=baseline)
-    out = Path(args.out) if args.out else Path("audits") / run["target"]["name"] / run["run_id"] / "hallazgos.json"
+    out = Path(args.out) if args.out else workdir() / "runs" / run["target"]["name"] / run["run_id"] / "hallazgos.json"
     save_json(out, run)
     pending = [r["id"] for r in run["rules"] if r["status"] == "pending"]
     print(f"Run: {run['run_id']}")
@@ -66,7 +68,7 @@ def cmd_render(args: argparse.Namespace) -> int:
 
 def cmd_fetch(args: argparse.Namespace) -> int:
     try:
-        info = fetch(args.source, Path(args.dest), args.ref)
+        info = fetch(args.source, Path(args.dest) if args.dest else workdir() / "clones", args.ref)
     except GitError as exc:
         print(f"ERROR: {exc}")
         return 1
@@ -106,17 +108,12 @@ def cmd_closure(args: argparse.Namespace) -> int:
 
 def cmd_cleanup(args: argparse.Namespace) -> int:
     final = load_json(Path(args.run))
-    archive = Path(args.archive_dir) if args.archive_dir else Path("audits") / final["target"]["name"]
     try:
-        rep = cleanup(Path(args.repo), final, archive, delete=args.delete, allow_observations=args.allow_observations)
+        rep = cleanup(Path(args.repo), final, delete=args.delete, allow_observations=args.allow_observations)
     except GitError as exc:
         print(f"ERROR: {exc}")
         return 1
-    run_ids = [b.removeprefix("audit/") for b in rep["deleted"] + rep["kept"]]
-    save_json(archive / f"ciclo-{final['run_id']}.json", {
-        "final_run_id": final["run_id"], "branch": final["target"].get("ref"), "run_ids": run_ids,
-        "deleted": rep["deleted"], "dry_run": rep["dry_run"], "verdict": rep["verdict"]})
-    print(f"Dictamen: {rep['verdict']} | archivos archivados en {archive}: {rep['archived']}")
+    print(f"Dictamen: {rep['verdict']}")
     for b in rep["deleted"]:
         print(f"ELIMINADA: {b}")
     for b in rep["kept"]:
@@ -132,18 +129,40 @@ def cmd_cleanup(args: argparse.Namespace) -> int:
 
 def cmd_merge_prompt(args: argparse.Namespace) -> int:
     final = load_json(Path(args.run))
-    repo = Path(args.repo)
-    base = args.base or default_branch(repo)
+    base = args.base or default_branch(Path(args.repo))
     branch = args.branch or final["target"].get("ref")
-    cycle_file = Path(args.cycle) if args.cycle else Path("audits") / final["target"]["name"] / f"ciclo-{final['run_id']}.json"
-    ids = load_json(cycle_file)["run_ids"] if cycle_file.is_file() else []
-    text = render_merge_prompt(final, branch, base, ids)
+    text = render_merge_prompt(final, branch, base)
     if text is None:
         print(f"No hay merge pendiente: la rama auditada ({branch}) ya es la rama principal ({base}).")
         return 0
-    out = Path(args.out) if args.out else Path(args.run).with_name("prompt-merge.md")
+    out = ensure_outside_repo(Path(args.out) if args.out else Path(args.run).with_name("prompt-merge.md"))
     out.write_text(text, encoding="utf-8", newline="\n")
     print(f"Prompt de merge: {out} (rama {branch} -> {base})")
+    return 0
+
+
+def cmd_workdir(args: argparse.Namespace) -> int:
+    print(workdir())
+    return 0
+
+
+def cmd_purge(args: argparse.Namespace) -> int:
+    """Elimina los archivos de trabajo (informes, prompts y clones). Último paso de cada ciclo."""
+    base = workdir()
+    if args.all:
+        targets = [base]
+    else:
+        if not args.name or not re.fullmatch(r"[\w.-]+", args.name) or args.name in (".", ".."):
+            print("ERROR: indique el nombre del repositorio auditado (o --all).")
+            return 2
+        targets = [base / "runs" / args.name, base / "clones" / args.name]
+    removed = 0
+    for t in targets:
+        if t.exists():
+            shutil.rmtree(t)
+            print(f"ELIMINADO: {t}")
+            removed += 1
+    print(f"Purga terminada: {removed} carpeta(s) eliminada(s). No queda ningún registro local.")
     return 0
 
 
@@ -153,7 +172,7 @@ def main(argv: list[str] | None = None) -> int:
 
     p = sub.add_parser("scan", help="Inventario y reglas deterministas.")
     p.add_argument("target", help="Ruta del clon del repositorio objetivo (no se modifica).")
-    p.add_argument("--out", help="Ruta de hallazgos.json (por defecto audits/<repo>/<run_id>/).")
+    p.add_argument("--out", help="Ruta de hallazgos.json (por defecto, el directorio de trabajo temporal; nunca dentro de dlc.audit).")
     p.add_argument("--profile", default="default")
     p.add_argument("--ref", help="Nombre de la rama auditada (por defecto, la rama actual del clon).")
     p.add_argument("--baseline", help="hallazgos.json de la ronda anterior (fija ronda y baseline).")
@@ -178,7 +197,7 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("fetch", help="Clona por enlace y deja el árbol en la rama o commit indicado.")
     p.add_argument("source", help="URL del repositorio (https/ssh) o ruta local.")
     p.add_argument("--ref", help="Rama, etiqueta o commit (por defecto, la rama por defecto del remoto).")
-    p.add_argument("--dest", default="work", help="Carpeta de trabajo (ignorada por git).")
+    p.add_argument("--dest", help="Carpeta de clones (por defecto, el directorio de trabajo temporal).")
     p.set_defaults(func=cmd_fetch)
 
     p = sub.add_parser("publish", help="Publica la rama audit/<run_id> en el repositorio auditado.")
@@ -195,10 +214,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--out")
     p.set_defaults(func=cmd_closure)
 
-    p = sub.add_parser("cleanup", help="Archiva y elimina las ramas audit/* de un ciclo aprobado.")
+    p = sub.add_parser("cleanup", help="Elimina las ramas audit/* de un ciclo aprobado (no guarda registros).")
     p.add_argument("run", help="hallazgos.json de la ronda final (dictamen APROBADO).")
     p.add_argument("--repo", required=True, help="Clon del repositorio auditado.")
-    p.add_argument("--archive-dir", help="Dónde guardar los registros (por defecto audits/<repo>).")
     p.add_argument("--delete", action="store_true", help="Elimina las ramas del remoto. Sin esto solo simula.")
     p.add_argument("--allow-observations", action="store_true", help="Acepta también APROBADO CON OBSERVACIONES.")
     p.set_defaults(func=cmd_cleanup)
@@ -208,9 +226,16 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--repo", required=True, help="Clon del repositorio auditado.")
     p.add_argument("--branch", help="Rama a integrar (por defecto, la auditada en la ronda final).")
     p.add_argument("--base", help="Rama principal (por defecto, la rama por defecto del remoto).")
-    p.add_argument("--cycle", help="ciclo-<run_id>.json generado por cleanup.")
     p.add_argument("--out")
     p.set_defaults(func=cmd_merge_prompt)
+
+    p = sub.add_parser("workdir", help="Muestra el directorio de trabajo temporal (fuera del repositorio).")
+    p.set_defaults(func=cmd_workdir)
+
+    p = sub.add_parser("purge", help="Elimina los archivos de trabajo de un repositorio auditado. Último paso del ciclo.")
+    p.add_argument("name", nargs="?", help="Nombre del repositorio auditado.")
+    p.add_argument("--all", action="store_true", help="Elimina todo el directorio de trabajo.")
+    p.set_defaults(func=cmd_purge)
 
     args = parser.parse_args(argv)
     try:
@@ -219,7 +244,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: no se encontró {exc.filename or exc}.")
     except json.JSONDecodeError as exc:
         print(f"ERROR: JSON inválido ({exc}).")
-    except GitError as exc:
+    except (GitError, PolicyError) as exc:
         print(f"ERROR: {exc}")
     return 2
 
