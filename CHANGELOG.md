@@ -4,6 +4,41 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-11-26
+
+Cierra las observaciones de la re-auditoría de integridad del commit `6f542dd` (veredicto `ÍNTEGRO CON OBSERVACIONES`; 12 correcciones resueltas, sin regresiones).
+
+### Corregido
+
+- `docs/contrato-salida.md`: `purge` también elimina `demo/<repo>/` (AUD-13).
+- `tests/test_integrity.py`: el detector de imports sin usar ya no acepta como usado un nombre que solo aparece entre comillas en el archivo (AUD-14). La parte del hallazgo que decía que no contaba el uso como atributo no era cierta: `ast.walk` ya visita el nombre dentro de `os.getcwd()`.
+- `CHANGELOG.md`: la cifra de 0.8.1 distingue los 11 hallazgos del candidato condicional (AUD-15).
+
+### Añadido
+
+- `tests/test_integrity.py`: los IDs de requisitos (`S-`, `A-`, `O-`, `G-`) citados en documentos vigentes deben existir en `docs/cumplimiento/`.
+
+
+## [0.8.1] - 2026-11-26
+
+Corrige los hallazgos de la auto-auditoría de integridad del commit `3db7ab0` (11 hallazgos más 1 candidato condicional: 12 puntos, todos confirmados).
+
+### Corregido
+
+- `README.md`: el banner de estado ya no dice que Codex, ChatGPT y Antigravity son "obligatorias en v1" (AUD-01) y la sección Estructura lista todo el árbol, incluidos `CHANGELOG.md`, `.gitignore`, `docs/cumplimiento/`, `docs/decisiones/` y todos los subcomandos de la CLI (AUD-09).
+- `docs/alcance.md`: dos estados desactualizados sobre las ramas de octubre; la etiqueta de archivo no se pudo crear y la recuperación es `refs/pull/1/head` (AUD-02). C4 y C8 pasan a la Fase 2 del roadmap y las demás brechas a los pendientes (AUD-04); la alternativa de entregar el detalle en el prompt consta como pendiente (AUD-05).
+- `docs/decisiones/`: las tres decisiones "Reemplazada" nombran su reemplazo en el campo `Estado` y en el índice (AUD-03).
+- `docs/multiplataforma.md`: el diagrama ya no cita `reaudit/references/`, que no existe (AUD-06), y el enlace a las citas apunta a los archivos que las contienen (AUD-10).
+- `docs/cumplimiento/anthropic.md`: una línea en blanco partía la tabla de fuentes (AUD-11).
+- `docs/metodologia.md`: el diagrama ya no sugiere una carpeta `work/` del repositorio (AUD-12).
+- Cinco imports sin usar en `dlc_audit/closure.py` y tres archivos de pruebas (AUD-07) y un docstring con el término retirado "archivado" (AUD-08).
+
+### Añadido
+
+- `tests/test_integrity.py`: convierte las comprobaciones mecánicas de la auditoría en pruebas permanentes (enlaces, rutas citadas, comandos documentados, estructura del README, tablas, imports sin usar, versión y changelog, IDs de reglas, documentos huérfanos y archivos basura).
+- `tests/test_docs.py`: el campo `Estado` de una decisión reemplazada debe nombrar su reemplazo.
+
+
 ## [0.8.0] - 2026-11-26
 
 ### Añadido

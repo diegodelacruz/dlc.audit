@@ -13,7 +13,7 @@ Tú -> [enlace] -> AUDITOR -> prompt A -> Tú -> INTEGRADOR -> prompt B (cierre)
 
 Detalle y garantías: [docs/protocolo.md](docs/protocolo.md).
 
-> **Estado:** v1 incompleta. El núcleo y el protocolo funcionan con Claude Code; la compatibilidad con Codex, ChatGPT y Antigravity (obligatoria en v1) está pendiente. Ver [docs/alcance.md](docs/alcance.md).
+> **Estado:** v1 incompleta. El núcleo y el protocolo funcionan con Claude Code, pero la prueba de punta a punta en esa plataforma está pendiente del usuario. Codex, ChatGPT y Antigravity son instalables; su ejecución es **[No verificado]** hasta que alguien la pruebe. Ver [docs/alcance.md](docs/alcance.md).
 
 ## Qué audita (Fase 1)
 
@@ -118,11 +118,15 @@ Requisito: permiso de **escritura** en el repositorio auditado, solo para crear 
 
 ```
 AGENTS.md                reglas para agentes
-docs/                    protocolo, alcance, contrato de salida, metodología
+CHANGELOG.md             historial de cambios
+.gitignore               exclusiones; incluye las carpetas de informes, que nunca se versionan
+docs/                    protocolo, alcance, multiplataforma, contrato de salida, metodología, criterios y guion de prueba
+docs/cumplimiento/       requisitos oficiales de cada plataforma, con citas literales y fuente
+docs/decisiones/         registro de decisiones de diseño, con índice
 rules/                   catálogos de reglas (JSON, versionados)
 profiles/                perfiles: catálogos, severidades, convenciones de prompts
-templates/               plantillas de informe y de prompts (integrador y detalle)
-dlc_audit/               scan, validate, render, fetch, publish, closure, skills (Python, solo biblioteca estándar)
+templates/               plantillas de informe y de prompts (integrador, detalle y merge)
+dlc_audit/               CLI: scan, validate, render, fetch, publish, closure, cleanup, merge-prompt, purge, workdir, skills, demo (Python, solo biblioteca estándar)
 skills/                  fuente única de las skills portables (audit-repo, reaudit)
 .claude/skills/          copia generada para Claude Code (no editar)
 .agents/skills/          copia generada para Codex y Antigravity (no editar)

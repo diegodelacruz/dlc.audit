@@ -1,6 +1,6 @@
 # 2026-10-19 Reglas de veredicto implementadas en el validador
 
-Estado: Reemplazada
+Estado: Reemplazada por `20261126-protocolo-auditor-integrador.md`
 
 Origen: rama `claude/gallant-babbage-2srymf` (octubre de 2026), portada el 2026-11-26.
 

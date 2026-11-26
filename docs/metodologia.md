@@ -12,7 +12,7 @@
 ## Flujo
 
 ```
-enlace --fetch--> clon de trabajo (work/)
+enlace --fetch--> clon de trabajo (directorio temporal, fuera del repositorio)
 	|
 	v
 scan  ->  hallazgos.json (reglas deterministas evaluadas, juicio = pending)

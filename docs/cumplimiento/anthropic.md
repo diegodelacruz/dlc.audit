@@ -8,7 +8,6 @@ Fecha de consulta: **2026-11-26**.
 |---|---|---|---|
 | Agent Skills: visión general | https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview | Accesible (HTTP 200) | Texto completo (unos 23.600 caracteres), citas literales |
 | Claude Code: skills | https://code.claude.com/docs/en/skills | Accesible | Texto literal de los primeros 79.898 de 121.124 caracteres; el resto llegó como resumen y **no se usó** |
-
 | Claude Code: subagentes | https://code.claude.com/docs/en/sub-agents | Accesible | Literal de los primeros 79.890 de 114.792 caracteres; el resto llegó como resumen y no se usó |
 | Claude Code: permisos | https://code.claude.com/docs/en/permissions | Accesible | Literal de los primeros 79.888 de 94.755 caracteres; el resto llegó como resumen y no se usó |
 | Claude Code: hooks | https://code.claude.com/docs/en/hooks | Accesible | Literal en los tramos 0 a 79.900 y 179.900 a 301.722 (de unos 301.700); el tramo central llegó como resumen y no se usó |

@@ -102,7 +102,7 @@ La decisión sobre `not_applicable` y `not_fixed` es del auditor: si la evidenci
 
 ## Riesgos y límites [Inferencial]
 
-- **Permisos:** publicar la rama exige escritura en el repositorio auditado. Sin ella, el flujo se detiene antes de `publish` y el prompt A no es utilizable (el integrador no tendría el detalle). Alternativa no implementada: entregar el detalle completo en el prompt.
+- **Permisos:** publicar la rama exige escritura en el repositorio auditado. Sin ella, el flujo se detiene antes de `publish` y el prompt A no es utilizable (el integrador no tendría el detalle). Alternativa no implementada, registrada en `alcance.md`: entregar el detalle completo en el prompt.
 - **Ramas `audit/*`:** una por ronda; se eliminan al cerrar el ciclo. Si el ciclo se abandona sin `APROBADO`, quedan hasta que se cierre otro ciclo o se borren a mano.
 - **No hay registros tras el cierre.** Este repositorio no guarda informes: el informe de cada ronda vive en la rama `audit/*` del repositorio auditado mientras dura el ciclo, y el informe final solo en la conversación. Al cerrar, `purge` elimina los archivos de trabajo. La trazabilidad que perdura es la del repositorio auditado (los commits de corrección y el merge del integrador).
 - **Permiso de borrado:** eliminar ramas remotas exige escritura; si el remoto lo rechaza, `cleanup` falla y se informa sin reintentar por otra vía.

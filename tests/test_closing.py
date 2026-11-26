@@ -1,4 +1,4 @@
-"""Cierre del ciclo: archivado, borrado de ramas audit/* y prompt de merge."""
+"""Cierre del ciclo: borrado de ramas audit/* y prompt de merge."""
 from __future__ import annotations
 
 import copy

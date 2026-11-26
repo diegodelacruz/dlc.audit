@@ -60,4 +60,4 @@ El campo `status` de un hallazgo vale `open` en Fase 1.
 - C5: contrastar con su fuente las 13 reglas restantes.
 - C7 y C9: sin detección determinista.
 
-Las dos primeras quedan como mejoras de Fase 2; las otras, como trabajo futuro del catálogo.
+Las dos primeras están en la Fase 2 del roadmap y las otras, como trabajo futuro del catálogo, en los pendientes de `alcance.md`.

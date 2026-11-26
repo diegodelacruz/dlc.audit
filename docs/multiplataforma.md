@@ -22,7 +22,7 @@ Consecuencia de M2 y M4: **solo Claude Code puede quedar verificado de punta a p
 
 ## Plataformas (consulta literal del 2026-11-26)
 
-Las citas textuales, las URL y el estado de cada requisito están en [`cumplimiento/`](cumplimiento/plataformas.md).
+El resumen de cómo carga cada plataforma las skills está en [`cumplimiento/plataformas.md`](cumplimiento/plataformas.md); las citas textuales, las URL y el estado de cada requisito, en [`agent-skills.md`](cumplimiento/agent-skills.md), [`anthropic.md`](cumplimiento/anthropic.md), [`openai.md`](cumplimiento/openai.md) y [`google.md`](cumplimiento/google.md).
 
 | Plataforma | Dónde carga las skills | Estado de verificación |
 |---|---|---|
@@ -53,8 +53,7 @@ El flujo del auditor exige:
 skills/                       # fuente única, editable, portable
 	audit-repo/SKILL.md
 	audit-repo/references/    # procedimiento detallado (divulgación progresiva)
-	reaudit/SKILL.md
-	reaudit/references/
+	reaudit/SKILL.md          # usa la referencia de audit-repo
 .claude/skills/               # copia generada para Claude Code
 .agents/skills/               # copia generada para Codex y Antigravity
 .claude/agents/dlc-auditor.md # atajo opcional, solo Claude Code

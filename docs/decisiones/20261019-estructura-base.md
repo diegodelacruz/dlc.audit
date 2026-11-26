@@ -1,6 +1,6 @@
 # 2026-10-19 Estructura base del repositorio
 
-Estado: Reemplazada
+Estado: Reemplazada por `README.md` (estructura vigente) y `20261126-sin-informes-en-este-repositorio.md`
 
 Origen: rama `claude/gallant-babbage-2srymf` (octubre de 2026), portada el 2026-11-26.
 

@@ -92,7 +92,7 @@ En `--final` no puede quedar ninguna regla en `pending`.
 ## Cierre del ciclo
 
 - `cleanup` no escribe nada en disco: borra las ramas `audit/*` del ciclo e informa por pantalla.
-- `purge <repo>` elimina `runs/<repo>/` y `clones/<repo>/` del directorio de trabajo.
+- `purge <repo>` elimina `runs/<repo>/`, `clones/<repo>/` y `demo/<repo>/` del directorio de trabajo.
 - `merge-prompt` genera `prompt-merge.md` (prompt C) junto al run final. No se genera si la rama auditada ya es la principal.
 
 ## Severidad

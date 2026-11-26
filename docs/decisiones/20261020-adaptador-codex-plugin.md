@@ -1,6 +1,6 @@
 # 2026-10-20 Adaptador de Codex como plugin
 
-Estado: Reemplazada
+Estado: Reemplazada por `20261126-multiplataforma-alcance-y-modo.md`
 
 Origen: rama `claude/gallant-babbage-2srymf` (octubre de 2026), portada el 2026-11-26.
 
