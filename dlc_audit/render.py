@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from string import Template
 
+from .requisitos import load_requirements
 from .common import (
     CONFIDENCE_LABEL, ROOT, SEVERITIES, ensure_outside_repo, is_blocking, load_catalog, load_profile, normalize,
     verdict,
@@ -123,6 +124,7 @@ def render_integrator_prompt(run: dict, out_dir: Path, root: Path = ROOT) -> Pat
     if not findings:
         return None
     out_dir = ensure_outside_repo(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
     profile = load_profile(run["profile"]["name"], root)
     rows = ["| Id | Severidad | Certeza | Bloquea | Título | Archivos |", "|---|---|---|---|---|---|"]
     for f in findings:
@@ -219,6 +221,50 @@ def _delta(run: dict, baseline: dict) -> str:
     return "\n".join(rows) + "\n"
 
 
+def compliance_matrix(run: dict, catalog: dict, requirements: dict) -> list[tuple[str, dict, list[str], str]]:
+    """Estado por requisito oficial: CUMPLE, NO_CUMPLE, NO_APLICA o NO_VERIFICADO (criterio C10)."""
+    status = {r["id"]: r["status"] for r in run["rules"]}
+    with_findings = {f["rule_id"] for f in run["findings"]}
+    linked: dict[str, list[str]] = {}
+    for rid in status:
+        for req in catalog.get(rid, {}).get("requirements", []):
+            linked.setdefault(req, []).append(rid)
+    rows = []
+    for req in sorted(linked):
+        info = requirements.get(req)
+        if info is None:
+            continue
+        rules = sorted(linked[req])
+        states = [status[r] for r in rules]
+        if not info["verified"]:
+            estado = "NO_VERIFICADO"
+        elif any(r in with_findings for r in rules):
+            estado = "NO_CUMPLE"
+        elif "pending" in states:
+            estado = "NO_VERIFICADO"
+        elif all(s == "not_applicable" for s in states):
+            estado = "NO_APLICA"
+        else:
+            estado = "CUMPLE"
+        rows.append((req, info, rules, estado))
+    return rows
+
+
+def _compliance_section(run: dict, catalog: dict, root: Path) -> str:
+    rows = compliance_matrix(run, catalog, load_requirements(root))
+    if not rows:
+        return ""
+    lines = ["## Cumplimiento de requisitos oficiales", "",
+             "| Requisito | Descripción | Reglas | Estado |", "|---|---|---|---|"]
+    for req, info, rules, estado in rows:
+        title = info["title"].replace("|", "\\|")
+        lines.append(f"| {req} | {title} | {', '.join(rules)} | {estado} |")
+    lines += ["", "`CUMPLE` significa que las reglas vinculadas se evaluaron sin hallazgos; no sustituye la verificación "
+              "humana. `NO_VERIFICADO` indica una regla pendiente o un requisito que la documentación oficial no permitió "
+              "comprobar. Las citas literales de cada requisito están en `docs/cumplimiento/` de dlc.audit.", ""]
+    return "\n".join(lines) + "\n"
+
+
 def _closure_section(check: dict) -> str:
     rows = ["## Verificación del cierre del integrador", "",
             "| Declarado | Cantidad |", "|---|---|"]
@@ -239,6 +285,7 @@ def _closure_section(check: dict) -> str:
 def render_report(run: dict, out_dir: Path, index: list, baseline: dict | None = None, root: Path = ROOT,
                   closure: dict | None = None, has_integrator_prompt: bool = False) -> Path:
     out_dir = ensure_outside_repo(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
     findings = run["findings"]
     profile = load_profile(run["profile"]["name"], root)
     dictamen = verdict(findings, profile)
@@ -292,6 +339,7 @@ def render_report(run: dict, out_dir: Path, index: list, baseline: dict | None =
         baseline_note=f" (baseline `{run['baseline_run_id']}`)" if run.get("baseline_run_id") else "",
         verdict=dictamen, verdict_detail=detail,
         closure_section=_closure_section(closure) if closure else "",
+        compliance_section=_compliance_section(run, load_catalog(profile, root), root),
         started_at=run["started_at"], finished_at=run.get("finished_at") or "-",
         executive_summary=run["executive_summary"].strip() or "(pendiente)",
         severity_table="\n".join(table), delta_section=_delta(run, baseline) if baseline else "",

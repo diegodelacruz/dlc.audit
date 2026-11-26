@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Reglas para agentes que modifiquen u operen este repositorio. Versión 1.5.
+Reglas para agentes que modifiquen u operen este repositorio. Versión 1.6.
 
 ## 1. Propósito
 
@@ -28,6 +28,7 @@ Reglas para agentes que modifiquen u operen este repositorio. Versión 1.5.
 - Fuente de verdad del resultado: el JSON del run. Informe y prompts se **generan** desde él.
 - Parametrización primero: reglas, severidades, vigencias, criterios de aprobación (`approval`), convenciones y política de conversación (`handoff`) viven en `rules/*.json` y `profiles/*.json`.
 - Todo cambio de una regla incrementa su `version`; no se edita una regla vigente sin versionar.
+- Una regla que cite un requisito oficial lo enlaza en `requirements` (IDs de `docs/cumplimiento/`); solo se marca `source_verified: true` si ese requisito está verificado. Las pruebas lo comprueban.
 - **Las skills se editan solo en `skills/`.** `.claude/skills/` y `.agents/skills/` son copias generadas: nunca se editan a mano. Tras cambiar una skill ejecuta `python -m dlc_audit skills sync`; `python -m dlc_audit skills check` debe pasar (las pruebas lo verifican).
 - **Las skills son portables:** frontmatter solo con `name` y `description`; sin variables ni herramientas propietarias (`$ARGUMENTS`, `AskUserQuestion`, rutas `.claude/`). Reglas completas en `docs/multiplataforma.md`.
 - Python: solo biblioteca estándar (3.11+), indentación de 4 espacios (PEP 8), sin emojis. Pruebas con `unittest`.

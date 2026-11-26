@@ -4,6 +4,27 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-26
+
+### Añadido
+
+- Reglas nuevas: `SKL-013` (nombre con palabra o valor reservado), `SKL-014` (etiquetas tipo XML en `name` o `description`), `SKL-015` (frontmatter fuera de la especificación abierta), `SKL-016` (`bypassPermissions` en ajustes de proyecto), `TRN-008` (contradicciones, criterio C7) y `TRN-009` (datos personales, criterio C9). El catálogo pasa de 38 a 44 reglas.
+- Campo `requirements` en las reglas: enlaza cada regla con los requisitos de `docs/cumplimiento/` que la respaldan.
+- Sección "Cumplimiento de requisitos oficiales" en el informe, con `CUMPLE`, `NO_CUMPLE`, `NO_APLICA` o `NO_VERIFICADO` por requisito (criterio C10).
+- `docs/cumplimiento/anthropic.md`: requisitos A-14 a A-24 (subagentes, permisos, ajustes y hooks de Claude Code) con citas literales.
+- `tests/test_rules_catalog.py`: trazabilidad regla a requisito, detectores nuevos y estados de la matriz.
+
+### Cambiado
+
+- Reglas versionadas a 1.1.0 y contrastadas con su fuente: `SKL-001` a `SKL-004`, `SKL-006` a `SKL-009`. Las reglas sin contrastar pasan de 21 a 13.
+- `SKL-008` solo marca los permisos `Bash` y `Bash(*)` (A-17). Ya no marca `bypassPermissions` ni `Bash(*:*)`.
+- `render_report` y `render_integrator_prompt` crean la carpeta de salida si no existe.
+
+### Corregido
+
+- `SKL-008` marcaba `defaultMode: bypassPermissions` en ajustes de proyecto como riesgo alto, pero Claude Code no aplica ese modo desde ajustes de proyecto o locales (A-20). Ahora es un hallazgo menor aparte (`SKL-016`).
+
+
 ## [0.6.0] - 2026-11-26
 
 ### Añadido

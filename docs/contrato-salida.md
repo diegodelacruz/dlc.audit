@@ -134,6 +134,11 @@ Dos hallazgos de la misma regla con el mismo archivo y extracto colisionan; `val
 | `remediation`, `acceptance` | Qué cambiar y cuándo se considera corregido (alimenta los prompts) |
 | `valid_from`, `valid_to` | Vigencia; `valid_to: null` = abierta |
 | `source`, `source_verified` | Origen; `false` si el criterio no se ha contrastado con la fuente |
+| `requirements` | Opcional. IDs de requisitos oficiales de `docs/cumplimiento/` (por ejemplo `S-03`, `A-03`) que respalda la regla. Alimenta la sección de cumplimiento del informe |
+
+## Sección de cumplimiento del informe
+
+`informe.md` incluye "Cumplimiento de requisitos oficiales" cuando alguna regla del run tiene `requirements`. Estado por requisito: `CUMPLE`, `NO_CUMPLE`, `NO_APLICA` o `NO_VERIFICADO`. `CUMPLE` significa que las reglas vinculadas se evaluaron sin hallazgos; no sustituye la verificación humana. No afecta al dictamen.
 
 ## Perfil (`profiles/<nombre>.json`)
 
