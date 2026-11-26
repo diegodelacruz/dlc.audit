@@ -13,6 +13,7 @@ from .common import PolicyError, ensure_outside_repo, load_json, save_json, utc_
 from .gitops import GitError, cleanup, default_branch, fetch, publish
 from .render import render_integrator_prompt, render_merge_prompt, render_prompts, render_report
 from .scan import run_scan
+from .skills import check_portability, check_sync, package_zip, sync as sync_skills
 from .validate import validate_run
 
 
@@ -141,6 +142,34 @@ def cmd_merge_prompt(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_skills(args: argparse.Namespace) -> int:
+    if args.action == "check":
+        problems = [f"portabilidad: {e}" for e in check_portability()] + [f"sincronía: {e}" for e in check_sync()]
+        for e in problems:
+            print(f"ERROR: {e}")
+        if problems:
+            print("Corrija la fuente en skills/ y ejecute: python -m dlc_audit skills sync")
+            return 1
+        print("Skills portables y copias sincronizadas.")
+        return 0
+    if args.action == "sync":
+        try:
+            actions = sync_skills()
+        except ValueError as exc:
+            print(f"ERROR: {exc}")
+            return 1
+        print("\n".join(actions) if actions else "Sin cambios: las copias ya coincidían con skills/.")
+        return 0
+    try:
+        path = package_zip(out_dir=Path(args.out_dir) if args.out_dir else None)
+    except ValueError as exc:
+        print(f"ERROR: {exc}")
+        return 1
+    print(f"Paquete: {path}")
+    print("AVISO [No verificado]: ChatGPT no documenta el formato de subida; este es el empaquetado habitual del estándar Agent Skills.")
+    return 0
+
+
 def cmd_workdir(args: argparse.Namespace) -> int:
     print(workdir())
     return 0
@@ -228,6 +257,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--base", help="Rama principal (por defecto, la rama por defecto del remoto).")
     p.add_argument("--out")
     p.set_defaults(func=cmd_merge_prompt)
+
+    p = sub.add_parser("skills", help="Valida, sincroniza o empaqueta las skills portables (skills/ es la fuente).")
+    p.add_argument("action", choices=("check", "sync", "package"))
+    p.add_argument("--out-dir", help="Solo package: carpeta de salida (por defecto, el directorio temporal; nunca dentro de dlc.audit).")
+    p.set_defaults(func=cmd_skills)
 
     p = sub.add_parser("workdir", help="Muestra el directorio de trabajo temporal (fuera del repositorio).")
     p.set_defaults(func=cmd_workdir)

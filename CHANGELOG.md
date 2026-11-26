@@ -4,18 +4,31 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-26
+
 ### Añadido
 
+- Fuente única de skills en `skills/` (`audit-repo`, `reaudit`) con el procedimiento de evaluación en `skills/audit-repo/references/evaluacion-juicio.md`.
+- Comando `skills` (`check`, `sync`, `package`): valida la portabilidad (frontmatter solo con `name` y `description`, nombres sin "claude" ni "anthropic", descripciones de hasta 1.024 caracteres sin etiquetas XML, sin herramientas propietarias, enlaces válidos), verifica y regenera las copias de `.claude/skills/` y `.agents/skills/`, y empaqueta un `.zip` para ChatGPT en el directorio temporal.
+- `tests/test_skills.py`: falla si una copia se edita a mano o se desincroniza, o si el propio repositorio incumple reglas de skills.
+- `.agents/` pertenece al dominio `skills-agentes` en el escaneo.
 - `docs/multiplataforma.md`: definición del soporte multiplataforma (bloque 1) con matriz verificada el 2026-11-26, requisitos del host, reglas de portabilidad y plan por bloques.
 - `docs/decisiones/20261126-multiplataforma-alcance-y-modo.md`: primer registro de decisión.
 
+### Cambiado
+
+- Las skills son portables: sin `argument-hint`, `$ARGUMENTS` ni `AskUserQuestion`; exigen shell, Python 3.11+ y git, y detienen el flujo si la plataforma no puede ejecutar comandos.
+- `.claude/agents/dlc-auditor.md` pasa a ser un atajo delgado que apunta a la referencia compartida.
+- `AGENTS.md` v1.4: reglas de edición y portabilidad de las skills.
+
 ### Corregido
 
+- La descripción de `audit-repo` contenía `<run_id>` y `<enlace>`, que cuentan como etiquetas XML (prohibidas por Anthropic en `description`).
 - `AGENTS.md`: regla 2 ya no dice que `cleanup` archiva registros.
 
 ### Pendiente
 
-- Bloques 2 a 5 de `docs/multiplataforma.md`: fuente única y copias generadas, portado desde la rama de octubre, catálogo de reglas y cierre de ramas.
+- Bloques 3 a 5 de `docs/multiplataforma.md`: portado desde la rama de octubre, catálogo de reglas y cierre de ramas.
 
 ## [0.4.0] - 2026-11-26
 
