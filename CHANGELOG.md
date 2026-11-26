@@ -23,9 +23,18 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 - `audits/` (carpeta de informes) y su `.gitkeep`.
 
+### Añadido
+
+- `docs/multiplataforma.md`: definición del soporte multiplataforma (bloque 1) con matriz verificada el 2026-11-26, requisitos del host, reglas de portabilidad y plan por bloques.
+- `docs/decisiones/20261126-multiplataforma-alcance-y-modo.md`: primer registro de decisión.
+
+### Corregido
+
+- `AGENTS.md`: regla 2 ya no dice que `cleanup` archiva registros.
+
 ### Pendiente
 
-- Multiplataforma obligatoria en v1 (Codex con prioridad, ChatGPT, Antigravity): adaptadores, verificación de sincronía y requisitos oficiales con URL y fecha. Ver `docs/alcance.md`.
+- Bloques 2 a 5 de `docs/multiplataforma.md`: fuente única y copias generadas, portado desde la rama de octubre, catálogo de reglas y cierre de ramas.
 
 ## [0.3.1] - 2026-11-26
 

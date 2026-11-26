@@ -2,15 +2,11 @@
 
 ## Estado de v1
 
-**v1 NO está completa.** Requisito vigente (decisión del usuario, 2026-10-19, ratificada el 2026-11-26): las plataformas **Claude, Codex (prioridad), ChatGPT y Antigravity son obligatorias en v1**. Lo implementado hoy cubre solo Claude Code (skills `audit-repo` y `reaudit`, subagente `dlc-auditor`) sobre un núcleo Python independiente de la plataforma.
+**v1 NO está completa.** La decisión de octubre (2026-10-19) hacía obligatorias Claude, Codex, ChatGPT y Antigravity. El 2026-11-26 se redefinió qué significa "soportada": **instalable en las 4 plataformas, con ejecución probada donde se pueda probar**. Como el usuario solo puede probar Claude Code, solo Claude Code puede quedar verificado de punta a punta; las demás constan como **[No verificado]** en ejecución. Definición, matriz de plataformas, reglas de portabilidad y plan por bloques: [multiplataforma.md](multiplataforma.md).
 
-Pendiente para cerrar v1:
+Lo implementado hoy cubre solo Claude Code (skills `audit-repo` y `reaudit`, subagente `dlc-auditor`) sobre un núcleo Python independiente de la plataforma.
 
-1. Adaptadores para Codex, ChatGPT y Antigravity de las skills y del subagente, con verificación de sincronía con el origen.
-2. Requisitos oficiales de OpenAI, Anthropic y Google con URL y fecha (resuelve las reglas con `source_verified: false`).
-3. Reconciliar tres diferencias de diseño con el trabajo previo de la rama `claude/gallant-babbage-2srymf` (PR #1): dónde queda el informe final (`auditorias/` del repositorio auditado por PR, o rama transitoria), formato del informe y idioma de los nombres de campos.
-
-El portado se hace por bloques (definir, revisar, confirmar, avanzar) desde la rama `claude/gallant-babbage-2srymf`, que se conserva hasta completarlo.
+Pendiente para cerrar v1: bloques 2 a 5 de `multiplataforma.md` y la reconciliación con la rama `claude/gallant-babbage-2srymf` (PR #1), que se conserva hasta completar el portado.
 
 ## Qué hace dlc.audit
 
@@ -70,7 +66,9 @@ Actúa como **auditor externo** en un flujo integrador-auditor (ver `protocolo.m
 
 | Decisión | Valor |
 |---|---|
-| Plataformas v1 | Multiplataforma obligatoria (Claude, Codex, ChatGPT, Antigravity) |
+| Plataformas v1 | Instalable en Claude Code, Codex, ChatGPT y Antigravity; ejecución probada donde se pueda (hoy solo Claude Code). Ver `multiplataforma.md` |
+| Formato del informe | El actual (JSON y documentos generados); se descarta el formato YAML de la rama de octubre |
+| Modo de uso de las skills | Dentro de un clon de `dlc.audit` |
 | Rama `claude/gallant-babbage-2srymf` (PR #1) | Portado selectivo y luego cierre del PR y borrado de la rama, con etiqueta de archivo |
 | Rama `claude/nice-carson-yc8xgi` | Descartada por el usuario (informes de auditoría de `apex.skills`; último commit `acee291`) |
 | Método de merge a `main` | Merge commit (`--no-ff`) |
