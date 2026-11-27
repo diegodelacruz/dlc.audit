@@ -227,3 +227,17 @@ class MaskedLiteralsTests(unittest.TestCase):
             ids = {f["rule_id"] for f in run_scan(target)["findings"]}
         self.assertNotIn("SQL-001", ids)
         self.assertNotIn("SQL-003", ids)
+
+
+class ProfileExceptionsTests(unittest.TestCase):
+    def test_default_profile_exceptions_are_well_formed(self):
+        profile = load_profile("default")
+        catalog = load_catalog(profile)
+        ids = [e["id"] for e in profile.get("accepted_exceptions", [])]
+        self.assertEqual(len(ids), len(set(ids)), "ids de excepción duplicados")
+        for exc in profile.get("accepted_exceptions", []):
+            for key in ("id", "repo", "rule_id", "paths", "reason", "approved_by", "valid_from"):
+                self.assertTrue(exc.get(key), f"{exc.get('id')}: falta {key}")
+            self.assertIn(exc["rule_id"], catalog, f"{exc['id']}: regla inexistente")
+            for glob in exc["paths"]:
+                self.assertNotIn(glob, ("*", "**", "**/*", "*/*"), f"{exc['id']}: ruta demasiado amplia")
