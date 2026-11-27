@@ -4,6 +4,17 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Unreleased]
 
+### Corregido
+
+- TRN-007: el detector `large_files` emitía evidencia `absence` sobre un archivo existente y el validador la rechazaba. Ahora emite el tipo `file_size` (`path`, `size_bytes`, `note`), que `validate` comprueba contra el tamaño real. Los ids de TRN-007 cambian respecto a versiones anteriores. La regla conserva su versión (solo cambia el formato de evidencia).
+- `closure`: acepta `file` como alias de `path` en `out_of_scope_changes` (aviso informativo) y avisa, sin fallar, de entradas mal formadas o sin `reason`. Se acabaron los avisos falsos de deriva.
+
+### Cambiado
+
+- El prompt de cierre muestra la forma `{"path": ..., "reason": ...}` de `out_of_scope_changes` y la añade a las reglas del cierre.
+- `docs/contrato-salida.md`: documenta `file_size`, `size_bytes` y la forma de `out_of_scope_changes[]`.
+- Decisión `docs/decisiones/20261127-evidencia-file-size-y-forma-out-of-scope.md`.
+
 ## [0.8.2] - 2026-11-26
 
 Cierra las observaciones de la re-auditoría de integridad del commit `6f542dd` (veredicto `ÍNTEGRO CON OBSERVACIONES`; 12 correcciones resueltas, sin regresiones).

@@ -95,7 +95,21 @@ def check_closure(baseline: dict, cierre: dict, repo: Path) -> dict:
     for missing in sorted(expected - seen):
         errors.append(f"cierre: falta el hallazgo {missing}.")
 
-    declared_extra = {x.get("path") for x in cierre.get("out_of_scope_changes", [])}
+    declared_extra: set[str] = set()
+    for i, x in enumerate(cierre.get("out_of_scope_changes") or []):
+        if not isinstance(x, dict):
+            warnings.append(f"cierre: out_of_scope_changes[{i}] no es un objeto con 'path' y 'reason'.")
+            continue
+        path = x.get("path")
+        if not path and x.get("file"):
+            path = x["file"]
+            warnings.append(f"cierre: out_of_scope_changes[{i}] usa 'file'; se aceptó como alias de 'path' (use 'path').")
+        if not path or not isinstance(path, str):
+            warnings.append(f"cierre: out_of_scope_changes[{i}] no tiene 'path' (ni 'file'); no se pudo asociar a ningún archivo.")
+            continue
+        declared_extra.add(path)
+        if not str(x.get("reason", "")).strip():
+            warnings.append(f"cierre: out_of_scope_changes[{i}] ({path}) no tiene 'reason'.")
     for path in changed:
         if path not in claimed_files and path not in declared_extra:
             warnings.append(f"deriva: {path} cambió y ningún hallazgo ni 'out_of_scope_changes' lo declara.")

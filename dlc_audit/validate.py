@@ -34,6 +34,16 @@ def _check_evidence(ev: dict, target: Path | None, label: str, errors: list[str]
     if not full.is_file():
         errors.append(f"{label}: {path} no existe en el objetivo.")
         return False
+    if ev["type"] == "file_size":
+        size = ev.get("size_bytes")
+        if not isinstance(size, int) or isinstance(size, bool):
+            errors.append(f"{label}: file_size exige 'size_bytes' entero ({size!r}).")
+            return False
+        real = full.stat().st_size
+        if size != real:
+            errors.append(f"{label}: size_bytes {size} no coincide con el tamaño real de {path} ({real}).")
+            return False
+        return True
     ls, le = ev.get("line_start"), ev.get("line_end")
     if not isinstance(ls, int) or not isinstance(le, int) or ls < 1 or le < ls:
         errors.append(f"{label}: líneas inválidas ({ls}-{le}).")

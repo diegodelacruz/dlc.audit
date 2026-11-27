@@ -111,6 +111,13 @@ def absence_ev(path: str, note: str) -> dict:
     return {"type": "absence", "path": path, "note": note}
 
 
+def file_size_ev(path: str, size_bytes: int, note: str = "") -> dict:
+    ev = {"type": "file_size", "path": path, "size_bytes": size_bytes}
+    if note:
+        ev["note"] = note
+    return ev
+
+
 def make_finding(rule: dict, evidence: list[dict], description: str | None = None,
                  confidence: str = "verified", group: str | None = None) -> dict:
     return {
@@ -254,7 +261,7 @@ def d_large_files(ctx: Ctx, rule: dict) -> list[dict]:
     for rel in ctx.files:
         if ctx.sizes[rel] > MAX_TEXT_BYTES:
             mb = ctx.sizes[rel] / 1_000_000
-            out.append(make_finding(rule, [absence_ev(rel, f"Tamaño {mb:.1f} MB; excede 1 MB.")],
+            out.append(make_finding(rule, [file_size_ev(rel, ctx.sizes[rel], f"Tamaño {mb:.1f} MB; excede 1 MB.")],
                                     f"El archivo pesa {mb:.1f} MB.", group="higiene"))
             ctx.limitations.append(f"No se analizó el contenido de {rel} (más de 1 MB).")
     return out
