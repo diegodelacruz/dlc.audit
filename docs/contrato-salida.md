@@ -70,9 +70,10 @@ En `--final` no puede quedar ninguna regla en `pending`.
 
 | Campo | Descripción |
 |---|---|
-| `type` | `file` (cita de código) o `absence` (algo que debería existir y no existe) |
+| `type` | `file` (cita de código), `absence` (algo que debería existir y no existe) o `file_size` (el archivo existe y el hallazgo es su tamaño, sin línea que citar) |
 | `path` | Ruta relativa al repositorio objetivo, con `/` |
 | `line_start`, `line_end` | Solo `file` |
+| `size_bytes` | Solo `file_size`: entero; `validate` lo compara con el tamaño real en disco |
 | `excerpt` | Solo `file`: texto literal de esas líneas (se compara sin espacios) |
 | `redacted` | `true` si el extracto oculta un secreto; no se compara el texto |
 | `note` | Opcional |
@@ -85,7 +86,7 @@ En `--final` no puede quedar ninguna regla en `pending`.
 | `head_revision` | Último commit empujado; debe existir y descender de `base_revision` |
 | `branch` | Rama que se re-auditará |
 | `findings[]` | Un elemento por hallazgo del baseline: `id`, `status` (`fixed`, `not_applicable`, `not_fixed`, `partial`), `commits`, `files`, `verification`, `note` |
-| `out_of_scope_changes[]` | `path` y `reason` de archivos cambiados que ningún hallazgo cubre |
+| `out_of_scope_changes[]` | Objetos `{"path": "<ruta relativa>", "reason": "<motivo>"}` de archivos cambiados que ningún hallazgo cubre; `commit` es opcional. `file` se acepta como alias de `path` con un aviso informativo; una entrada sin ruta o sin `reason` genera aviso, no error |
 
 `closure` genera `closure-check.json`: `errors`, `warnings` (deriva, archivos declarados que no cambiaron, commits fuera de rango), `changed_files`, `claims` y `contradicted` (declarados `fixed` que la nueva auditoría sigue detectando).
 
@@ -148,4 +149,5 @@ Selecciona catálogos, deshabilita reglas, sobrescribe severidades, define exclu
 |---|---|
 | `approval` | `block_on`: severidades que impiden la aprobación; `unverified_blocks`: si los no verificados bloquean (por defecto no) |
 | `merge` | `strategy` del prompt de merge: `no-ff` (por defecto), `squash` o `ff-only` |
+| `accepted_exceptions` | Lista de excepciones aceptadas por el usuario. Campos: `id`, `repo` (nombre del objetivo o `*`), `rule_id`, `paths` (globs), `reason`, `approved_by`, `valid_from`, `valid_to` (opcional). `scan` no informa un hallazgo si toda su evidencia coincide con los globs de una excepción vigente de su misma regla. Cada excepción usada se declara en `limitations` y en `coverage.accepted_exceptions`; nunca se omite en silencio. Solo aplica a hallazgos de `scan`; el agente que evalúa reglas de juicio respeta las excepciones listadas en `coverage.accepted_exceptions` |
 | `handoff` | Por rol (`integrator`, `auditor`): `conversation` (`MISMA` o `NUEVA`) y `reason`. Se imprimen en la cabecera de cada prompt |

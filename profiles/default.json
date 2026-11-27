@@ -1,6 +1,6 @@
 {
   "name": "default",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "description": "Perfil base: todos los catálogos de Fase 1 con severidades por defecto.",
   "catalogs": [
     "transversal",
@@ -19,6 +19,75 @@
     "dist/**",
     "build/**",
     ".audit/**"
+  ],
+  "accepted_exceptions": [
+    {
+      "id": "EXC-001",
+      "repo": "*",
+      "rule_id": "TRN-007",
+      "paths": [
+        "tests/fixtures/apex-exports/*.zip",
+        "vendor/upstreams/*.zip"
+      ],
+      "reason": "Exportaciones APEX usadas como fixtures de prueba y upstream vendorizado; su tamaño es intencional.",
+      "approved_by": "Diego",
+      "valid_from": "2026-11-26",
+      "valid_to": null
+    },
+    {
+      "id": "EXC-002",
+      "repo": "*",
+      "rule_id": "SKL-015",
+      "paths": [
+        "skills/apex-api-client-safe/SKILL.md",
+        "skills/apex-application-generator-complete/SKILL.md",
+        "skills/apex-audit-decisions-log/SKILL.md",
+        "skills/apex-automated-testing-safe/SKILL.md",
+        "skills/apex-blueprint-design-safe/SKILL.md",
+        "skills/apex-code-generation-safe/SKILL.md",
+        "skills/apex-data-migration-safe/SKILL.md",
+        "skills/apex-data-orchestrator-safe/SKILL.md",
+        "skills/apex-database-diagnostics/SKILL.md",
+        "skills/apex-delivery-lifecycle-complete/SKILL.md",
+        "skills/apex-delivery-lifecycle-safe/SKILL.md",
+        "skills/apex-delivery-lifecycle-zaimella/SKILL.md",
+        "skills/apex-design-review-orchestrator/SKILL.md",
+        "skills/apex-engineering-safe/SKILL.md",
+        "skills/apex-environment-alignment-complete/SKILL.md",
+        "skills/apex-export-qa-safe/SKILL.md",
+        "skills/apex-external-context-learn/SKILL.md",
+        "skills/apex-page-automation-safe/SKILL.md",
+        "skills/apex-page-range-governance/SKILL.md",
+        "skills/apex-pattern-mining-safe/SKILL.md",
+        "skills/apex-project-bootstrap-final/SKILL.md",
+        "skills/apex-project-workspace/SKILL.md",
+        "skills/apex-qa-orchestrator-safe/SKILL.md",
+        "skills/apex-rest-source-catalogs-safe/SKILL.md",
+        "skills/apex-schema-automation-safe/SKILL.md",
+        "skills/apex-solution-design/SKILL.md",
+        "skills/apex-ui-craft-safe/SKILL.md",
+        "skills/apex-user-manual/SKILL.md",
+        "skills/apex-zaimella-gestion-proyectos/SKILL.md",
+        "skills/apex/SKILL.md",
+        "skills/oracle-data-change-governance-final/SKILL.md"
+      ],
+      "reason": "Repositorio de uso propio, solo en Claude Code. Los campos category, order y tags del frontmatter alimentan el catalogo interno. Migrarlos a metadata antes de subir las skills a claude.ai, la API o Codex.",
+      "approved_by": "Diego",
+      "valid_from": "2026-11-27",
+      "valid_to": null
+    },
+    {
+      "id": "EXC-003",
+      "repo": "*",
+      "rule_id": "SQL-004",
+      "paths": [
+        "control-proyecto/cambios/20260921_apex_controlled_mcp/sql/01_inspeccion_privilegios.sql"
+      ],
+      "reason": "Artefacto de un cambio ya ejecutado en TEST y citado como evidencia. Reescribirlo alteraria el registro de lo que se ejecuto.",
+      "approved_by": "Diego",
+      "valid_from": "2026-11-27",
+      "valid_to": null
+    }
   ],
   "prompt_conventions": {
     "*": [

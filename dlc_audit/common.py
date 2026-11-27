@@ -19,7 +19,7 @@ EFFORTS = ("S", "M", "L")
 RULE_STATUSES = ("evaluated", "not_applicable", "pending")
 METHODS = ("deterministic", "judgment")
 DETECTORS = ("scan", "agent")
-EVIDENCE_TYPES = ("file", "absence")
+EVIDENCE_TYPES = ("file", "absence", "file_size")
 
 CONFIDENCE_LABEL = {
     "verified": "Verificado",

@@ -189,7 +189,7 @@ class AuditTests(unittest.TestCase):
         self.assertNotIn("ABCDEFGHIJKLMNOP", first)
 
     def test_helpers(self):
-        self.assertEqual(mask_sql("select 'a,b' -- c\nfrom t"), "select       " + " " * 4 + "\nfrom t")
+        self.assertEqual(mask_sql("select 'a,b' -- c\nfrom t"), "select '___' " + " " * 4 + "\nfrom t")
         fm = parse_frontmatter("---\nname: x\ndescription: >\n  uno\n  dos\n---\n")
         self.assertEqual(fm, {"name": "x", "description": "uno dos"})
         self.assertIsNone(parse_frontmatter("sin frontmatter"))
@@ -197,3 +197,56 @@ class AuditTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AcceptedExceptionsTests(unittest.TestCase):
+    def test_covered_findings_are_dropped_and_declared(self):
+        from dlc_audit.scan import apply_exceptions, active_exceptions
+        exc = {"id": "EXC-T", "repo": "objetivo", "rule_id": "TRN-007", "paths": ["fx/*.zip"],
+               "reason": "fixture", "approved_by": "t", "valid_from": "2026-01-01", "valid_to": None}
+        mk = lambda rule, path: {"rule_id": rule, "evidence": [{"path": path}]}
+        findings = [mk("TRN-007", "fx/a.zip"), mk("TRN-007", "otro/b.zip"), mk("TRN-001", "fx/c.zip")]
+        kept, used = apply_exceptions(findings, [exc])
+        self.assertEqual([f["evidence"][0]["path"] for f in kept], ["otro/b.zip", "fx/c.zip"])
+        self.assertEqual(used[0]["paths"], ["fx/a.zip"])
+        profile = {"accepted_exceptions": [exc]}
+        self.assertEqual(len(active_exceptions(profile, "objetivo", "2026-11-26")), 1)
+        self.assertEqual(active_exceptions(profile, "otro", "2026-11-26"), [])
+        self.assertEqual(active_exceptions(profile, "objetivo", "2025-12-31"), [])
+        exc["valid_to"] = "2026-06-30"
+        self.assertEqual(active_exceptions(profile, "objetivo", "2026-11-26"), [])
+
+
+class MaskedLiteralsTests(unittest.TestCase):
+    def test_literals_at_line_edges_are_not_formatting_findings(self):
+        sql = "select\n\t'A' as codigo\n\t, 'B' as valor\n\t, 'C'\nfrom dual;\n"
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "obj"
+            (target / "sql").mkdir(parents=True)
+            (target / "sql" / "a.sql").write_text(sql, encoding="utf-8")
+            ids = {f["rule_id"] for f in run_scan(target)["findings"]}
+        self.assertNotIn("SQL-001", ids)
+        self.assertNotIn("SQL-003", ids)
+
+    def test_literal_glued_to_a_keyword_keeps_dynamic_sql_detection(self):
+        sql = "begin\n\texecute immediate'delete from t where id = ' || p_id;\nend;\n"
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "obj"
+            (target / "sql").mkdir(parents=True)
+            (target / "sql" / "a.sql").write_text(sql, encoding="utf-8")
+            ids = {f["rule_id"] for f in run_scan(target)["findings"]}
+        self.assertIn("SQL-006", ids)
+
+
+class ProfileExceptionsTests(unittest.TestCase):
+    def test_default_profile_exceptions_are_well_formed(self):
+        profile = load_profile("default")
+        catalog = load_catalog(profile)
+        ids = [e["id"] for e in profile.get("accepted_exceptions", [])]
+        self.assertEqual(len(ids), len(set(ids)), "ids de excepción duplicados")
+        for exc in profile.get("accepted_exceptions", []):
+            for key in ("id", "repo", "rule_id", "paths", "reason", "approved_by", "valid_from"):
+                self.assertTrue(exc.get(key), f"{exc.get('id')}: falta {key}")
+            self.assertIn(exc["rule_id"], catalog, f"{exc['id']}: regla inexistente")
+            for glob in exc["paths"]:
+                self.assertNotIn(glob, ("*", "**", "**/*", "*/*"), f"{exc['id']}: ruta demasiado amplia")

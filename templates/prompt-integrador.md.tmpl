@@ -58,4 +58,4 @@ $closure_json
 ```
 ````
 
-Reglas del cierre: `status` es `fixed`, `not_applicable`, `not_fixed` o `partial`. `fixed` exige `commits`, `files` y `verification` (qué comprobaste y cómo). Los demás estados exigen `note` con el motivo.
+Reglas del cierre: `status` es `fixed`, `not_applicable`, `not_fixed` o `partial`. `fixed` exige `commits`, `files` y `verification` (qué comprobaste y cómo). Los demás estados exigen `note` con el motivo. Cada elemento de `out_of_scope_changes` tiene exactamente la forma `{"path": "<ruta relativa>", "reason": "<motivo>"}` (opcionalmente `commit`); usa `path`, no `file`. Si no hay cambios fuera de alcance, deja la lista vacía y elimina el elemento de ejemplo.

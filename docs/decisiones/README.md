@@ -14,9 +14,11 @@ Una decisión de diseño por archivo, con nombre `AAAAMMDD-slug.md`, un `Estado:
 | [20261019-respuestas-preguntas-abiertas.md](20261019-respuestas-preguntas-abiertas.md) | Respuestas de Diego a las preguntas abiertas | Vigente con modificaciones | octubre (rama anterior) |
 | [20261020-adaptador-codex-plugin.md](20261020-adaptador-codex-plugin.md) | Adaptador de Codex como plugin | Reemplazada por `20261126-multiplataforma-alcance-y-modo.md` | octubre (rama anterior) |
 | [20261126-cierre-de-ramas-de-octubre.md](20261126-cierre-de-ramas-de-octubre.md) | Cierre del PR de octubre y destino de las ramas antiguas | aceptada | 2026-11-26 |
+| [20261126-excepciones-aceptadas-en-el-perfil.md](20261126-excepciones-aceptadas-en-el-perfil.md) | Excepciones aceptadas en el perfil del auditor | aceptada | 2026-11-26 |
 | [20261126-multiplataforma-alcance-y-modo.md](20261126-multiplataforma-alcance-y-modo.md) | Multiplataforma: alcance y modo de uso | aceptada | 2026-11-26 |
 | [20261126-protocolo-auditor-integrador.md](20261126-protocolo-auditor-integrador.md) | Protocolo auditor-integrador | aceptada | 2026-11-26 |
 | [20261126-sin-informes-en-este-repositorio.md](20261126-sin-informes-en-este-repositorio.md) | Este repositorio no guarda informes de auditoría | aceptada | 2026-11-26 |
+| [20261127-evidencia-file-size-y-forma-out-of-scope.md](20261127-evidencia-file-size-y-forma-out-of-scope.md) | Evidencia `file_size` para TRN-007 y forma de `out_of_scope_changes` | aceptada | 2026-11-27 |
 
 ## No portada
 

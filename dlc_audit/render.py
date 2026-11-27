@@ -28,11 +28,25 @@ def _fence(text: str) -> str:
     return "```" if "```" not in text else "~~~~"
 
 
+def _human_size(size) -> str:
+    if not isinstance(size, int):
+        return "tamaño desconocido"
+    if size >= 1_000_000:
+        return f"{size / 1_000_000:.1f} MB ({size} bytes)"
+    if size >= 1_000:
+        return f"{size / 1_000:.1f} KB ({size} bytes)"
+    return f"{size} bytes"
+
+
 def _evidence_md(finding: dict) -> str:
     lines = []
     for ev in finding["evidence"]:
         if ev["type"] == "absence":
             lines.append(f"- `{ev['path']}`: {ev.get('note', 'no existe')}")
+            continue
+        if ev["type"] == "file_size":
+            note = f". {ev['note']}" if ev.get("note") else ""
+            lines.append(f"- `{ev['path']}`: {_human_size(ev.get('size_bytes'))}{note}")
             continue
         loc = f"{ev['path']}:{ev['line_start']}" + (f"-{ev['line_end']}" if ev["line_end"] != ev["line_start"] else "")
         tag = " (valor redactado)" if ev.get("redacted") else ""
@@ -141,7 +155,9 @@ def render_integrator_prompt(run: dict, out_dir: Path, root: Path = ROOT) -> Pat
         '  "head_revision": "<sha del último commit empujado>",\n'
         '  "branch": "<rama que auditará el auditor>",\n'
         f'  "findings": [\n{items}\n  ],\n'
-        '  "out_of_scope_changes": []\n'
+        '  "out_of_scope_changes": [\n'
+        '    {"path": "<ruta relativa>", "reason": "<motivo>"}\n'
+        '  ]\n'
         "}"
     )
     conv_i, why_i = _conversation(profile, "integrator")
