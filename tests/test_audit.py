@@ -189,7 +189,7 @@ class AuditTests(unittest.TestCase):
         self.assertNotIn("ABCDEFGHIJKLMNOP", first)
 
     def test_helpers(self):
-        self.assertEqual(mask_sql("select 'a,b' -- c\nfrom t"), "select       " + " " * 4 + "\nfrom t")
+        self.assertEqual(mask_sql("select 'a,b' -- c\nfrom t"), "select _____ " + " " * 4 + "\nfrom t")
         fm = parse_frontmatter("---\nname: x\ndescription: >\n  uno\n  dos\n---\n")
         self.assertEqual(fm, {"name": "x", "description": "uno dos"})
         self.assertIsNone(parse_frontmatter("sin frontmatter"))
@@ -215,3 +215,15 @@ class AcceptedExceptionsTests(unittest.TestCase):
         self.assertEqual(active_exceptions(profile, "objetivo", "2025-12-31"), [])
         exc["valid_to"] = "2026-06-30"
         self.assertEqual(active_exceptions(profile, "objetivo", "2026-11-26"), [])
+
+
+class MaskedLiteralsTests(unittest.TestCase):
+    def test_literals_at_line_edges_are_not_formatting_findings(self):
+        sql = "select\n\t'A' as codigo\n\t, 'B' as valor\n\t, 'C'\nfrom dual;\n"
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "obj"
+            (target / "sql").mkdir(parents=True)
+            (target / "sql" / "a.sql").write_text(sql, encoding="utf-8")
+            ids = {f["rule_id"] for f in run_scan(target)["findings"]}
+        self.assertNotIn("SQL-001", ids)
+        self.assertNotIn("SQL-003", ids)

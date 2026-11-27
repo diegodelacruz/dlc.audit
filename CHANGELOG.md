@@ -4,6 +4,10 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Unreleased]
 
+### Corregido
+
+- `scan`: `mask_sql` vaciaba las cadenas con espacios, de modo que una cadena al inicio o al final de línea producía falsos positivos de `SQL-001` (sangría con espacios) y `SQL-003` (coma al final). Ahora el contenido de las cadenas se sustituye por guiones bajos. Prueba `MaskedLiteralsTests`.
+
 ### Añadido
 
 - Perfil `default` 1.3.0: clave `accepted_exceptions` para declarar excepciones aceptadas por el usuario (regla, objetivo, globs, motivo, aprobador y vigencia). `scan` no informa esos hallazgos en rondas futuras y los declara en `limitations` y `coverage.accepted_exceptions`. Primera excepción: `EXC-001` (archivos zip de más de 1 MB, regla `TRN-007`, acotada por rutas de fixtures y upstreams vendorizados).

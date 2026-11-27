@@ -134,9 +134,13 @@ def span_evidence(path: str, text: str, start: int, end: int) -> dict:
 
 
 def mask_sql(text: str) -> str:
-    """Reemplaza comentarios y contenido de cadenas por espacios, conservando saltos de línea."""
+    """Reemplaza comentarios por espacios y el contenido de cadenas por guiones bajos, conservando saltos de línea.
+
+    Las cadenas no se vacían con espacios: una cadena al inicio o al final de línea parecería sangría con espacios
+    o una coma final y produciría falsos positivos en los detectores de formato."""
     pattern = re.compile(r"--[^\n]*|/\*.*?\*/|'(?:''|[^'])*'", re.S)
-    return pattern.sub(lambda m: re.sub(r"[^\n]", " ", m.group(0)), text)
+    fill = lambda m: re.sub(r"[^\n]", "_" if m.group(0).startswith("'") else " ", m.group(0))
+    return pattern.sub(fill, text)
 
 
 def parse_frontmatter(text: str) -> dict | None:
