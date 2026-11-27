@@ -189,7 +189,7 @@ class AuditTests(unittest.TestCase):
         self.assertNotIn("ABCDEFGHIJKLMNOP", first)
 
     def test_helpers(self):
-        self.assertEqual(mask_sql("select 'a,b' -- c\nfrom t"), "select _____ " + " " * 4 + "\nfrom t")
+        self.assertEqual(mask_sql("select 'a,b' -- c\nfrom t"), "select '___' " + " " * 4 + "\nfrom t")
         fm = parse_frontmatter("---\nname: x\ndescription: >\n  uno\n  dos\n---\n")
         self.assertEqual(fm, {"name": "x", "description": "uno dos"})
         self.assertIsNone(parse_frontmatter("sin frontmatter"))
@@ -227,6 +227,15 @@ class MaskedLiteralsTests(unittest.TestCase):
             ids = {f["rule_id"] for f in run_scan(target)["findings"]}
         self.assertNotIn("SQL-001", ids)
         self.assertNotIn("SQL-003", ids)
+
+    def test_literal_glued_to_a_keyword_keeps_dynamic_sql_detection(self):
+        sql = "begin\n\texecute immediate'delete from t where id = ' || p_id;\nend;\n"
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "obj"
+            (target / "sql").mkdir(parents=True)
+            (target / "sql" / "a.sql").write_text(sql, encoding="utf-8")
+            ids = {f["rule_id"] for f in run_scan(target)["findings"]}
+        self.assertIn("SQL-006", ids)
 
 
 class ProfileExceptionsTests(unittest.TestCase):

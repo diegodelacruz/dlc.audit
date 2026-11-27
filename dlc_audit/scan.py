@@ -141,12 +141,20 @@ def span_evidence(path: str, text: str, start: int, end: int) -> dict:
 
 
 def mask_sql(text: str) -> str:
-    """Reemplaza comentarios por espacios y el contenido de cadenas por guiones bajos, conservando saltos de línea.
+    """Reemplaza comentarios por espacios y el contenido de cadenas por guiones bajos (conservando sus comillas y los saltos de línea).
 
     Las cadenas no se vacían con espacios: una cadena al inicio o al final de línea parecería sangría con espacios
     o una coma final y produciría falsos positivos en los detectores de formato."""
     pattern = re.compile(r"--[^\n]*|/\*.*?\*/|'(?:''|[^'])*'", re.S)
-    fill = lambda m: re.sub(r"[^\n]", "_" if m.group(0).startswith("'") else " ", m.group(0))
+
+    def fill(m: re.Match) -> str:
+        lit = m.group(0)
+        if lit.startswith("'"):
+            # Se conservan las comillas como delimitador: así una cadena pegada a una palabra
+            # ("immediate'...'") no funde ambos tokens y los detectores con \b siguen coincidiendo.
+            return "'" + re.sub(r"[^\n]", "_", lit[1:-1]) + "'"
+        return re.sub(r"[^\n]", " ", lit)
+
     return pattern.sub(fill, text)
 
 

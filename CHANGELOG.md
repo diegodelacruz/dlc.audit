@@ -6,7 +6,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ### Corregido
 
-- `scan`: `mask_sql` vaciaba las cadenas con espacios, de modo que una cadena al inicio o al final de línea producía falsos positivos de `SQL-001` (sangría con espacios) y `SQL-003` (coma al final). Ahora el contenido de las cadenas se sustituye por guiones bajos. Prueba `MaskedLiteralsTests`.
+- `scan`: `mask_sql` vaciaba las cadenas con espacios, de modo que una cadena al inicio o al final de línea producía falsos positivos de `SQL-001` (sangría con espacios) y `SQL-003` (coma al final). Ahora el contenido de las cadenas se sustituye por guiones bajos y se conservan sus comillas, para que una cadena pegada a una palabra (`immediate'...'`) no funda ambos tokens ni oculte la detección de `SQL-006`. Prueba `MaskedLiteralsTests`.
 - TRN-007: el detector `large_files` emitía evidencia `absence` sobre un archivo existente y el validador la rechazaba. Ahora emite el tipo `file_size` (`path`, `size_bytes`, `note`), que `validate` comprueba contra el tamaño real. Los ids de TRN-007 cambian respecto a versiones anteriores. La regla conserva su versión (solo cambia el formato de evidencia).
 - `closure`: acepta `file` como alias de `path` en `out_of_scope_changes` (aviso informativo) y avisa, sin fallar, de entradas mal formadas o sin `reason`. Se acabaron los avisos falsos de deriva.
 
